@@ -107,12 +107,17 @@
 <style>
   .sidebar {
     width: 240px;
-    min-height: 100vh;
+    height: 100vh;
     background: #1a2e1a;
     color: #e8f5e9;
     display: flex;
     flex-direction: column;
     padding: 0 0 1rem 0;
+    /* Sticky on desktop */
+    position: sticky;
+    top: 0;
+    flex-shrink: 0;
+    overflow-y: auto;
   }
   .sidebar-header {
     padding: 1.5rem 1rem 1rem;

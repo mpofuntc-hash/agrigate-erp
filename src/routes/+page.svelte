@@ -78,7 +78,6 @@
   let markerLayer: any = null;
 
   onMount(async () => {
-    // ── Convex ─────────────────────────────────────────────────────────────────
     const [{ ConvexClient }, { api }] = await Promise.all([
       import("convex/browser"),
       import("../../convex/_generated/api"),
@@ -92,7 +91,6 @@
       todayLogs = r ?? [];
     });
 
-    // ── Intersection observer for active nav ───────────────────────────────────
     const obs = new IntersectionObserver(entries => {
       for (const e of entries) {
         if (e.isIntersecting) activeSection = e.target.getAttribute("data-s") ?? "dashboard";
@@ -100,7 +98,6 @@
     }, { threshold: 0.25 });
     document.querySelectorAll("[data-s]").forEach(el => obs.observe(el));
 
-    // ── Leaflet map ────────────────────────────────────────────────────────────
     if (mapEl) {
       const L = (await import("leaflet")).default;
       leafletMap  = L.map(mapEl).setView([-23.87, 30.14], 14);
@@ -118,9 +115,8 @@
     leafletMap?.remove();
   });
 
-  // ── Sync map pins whenever logs change ────────────────────────────────────────
   $effect(() => {
-    const logs = todayLogs; // reactive dependency
+    const logs = todayLogs;
     if (!leafletMap || !markerLayer) return;
     untrack(async () => {
       const L = (await import("leaflet")).default;
@@ -129,8 +125,8 @@
         if (log.lat == null || log.lng == null) continue;
         const icon = L.divIcon({
           className: "",
-          html: `<div class="map-pin"><span>🌾</span></div>`,
-          iconSize: [36, 36], iconAnchor: [18, 36],
+          html: `<div class="map-pin"></div>`,
+          iconSize: [10, 10], iconAnchor: [5, 5],
         });
         L.marker([log.lat, log.lng], { icon })
           .bindPopup(`<b>${workerName(log.workerId)}</b><br>${log.cropType} · ${log.binWeight} kg`)
@@ -139,7 +135,6 @@
     });
   });
 
-  // ── Mutations ─────────────────────────────────────────────────────────────────
   async function registerWorker(e: Event) {
     e.preventDefault(); regError = "";
     if (!client) return;
@@ -197,7 +192,7 @@
     await client.mutation(api.yieldLogs.deleteYieldLog, { id: id as any });
   }
 
-  function exportCSV() { alert("Preparing Export…"); }
+  function exportCSV() { alert("Preparing export…"); }
 
   function scrollTo(section: string) {
     document.querySelector(`[data-s="${section}"]`)?.scrollIntoView({ behavior: "smooth" });
@@ -205,21 +200,24 @@
   }
 
   const navItems = [
-    { id: "dashboard", icon: "◈", label: "Dashboard"  },
-    { id: "workers",   icon: "◉", label: "Workers"    },
-    { id: "yield",     icon: "◌", label: "Yield Log"  },
-    { id: "map",       icon: "◎", label: "Field Map"  },
-    { id: "reports",   icon: "◫", label: "Reports"    },
+    { id: "dashboard", label: "Overview"  },
+    { id: "workers",   label: "Personnel" },
+    { id: "yield",     label: "Harvest"   },
+    { id: "map",       label: "Field Map" },
+    { id: "reports",   label: "Reports"   },
   ];
 </script>
 
 <svelte:head>
-  <title>ZZ2 Worker Hub – AgriGate ERP</title>
+  <title>ZZ2 AgriGate — Worker Hub</title>
 </svelte:head>
 
-<!-- Mobile sidebar overlay -->
+<!-- Subtle orchard corner photo -->
+<div class="corner-photo" aria-hidden="true"></div>
+
 {#if sidebarOpen}
-  <div class="overlay" role="button" tabindex="-1" onclick={() => sidebarOpen = false} onkeydown={() => {}}></div>
+  <div class="overlay" role="button" tabindex="-1"
+       onclick={() => sidebarOpen = false} onkeydown={() => {}}></div>
 {/if}
 
 <div class="shell">
@@ -227,11 +225,8 @@
   <!-- ══ SIDEBAR ══════════════════════════════════════════════════════════════ -->
   <nav class="sidebar" class:open={sidebarOpen}>
     <div class="sb-brand">
-      <span class="sb-leaf">🌿</span>
-      <div>
-        <p class="sb-app">AgriGate ERP</p>
-        <p class="sb-farm">ZZ2 Farms</p>
-      </div>
+      <p class="sb-app">AgriGate ERP</p>
+      <p class="sb-farm">ZZ2 Farms</p>
     </div>
 
     <ul class="sb-nav">
@@ -242,7 +237,6 @@
             class:active={activeSection === item.id}
             onclick={() => scrollTo(item.id)}
           >
-            <span class="sb-icon">{item.icon}</span>
             <span class="sb-label">{item.label}</span>
             {#if item.id === "dashboard" && totalBins > 0}
               <span class="sb-badge">{totalBins}</span>
@@ -253,18 +247,34 @@
     </ul>
 
     <div class="sb-footer">
-      <div class="sb-pulse-row">
-        <span class="pulse-dot"></span>
-        <span class="sb-live">Live sync active</span>
+      <div class="sb-sync-row">
+        <span class="glow-dot glow-green"></span>
+        <span class="sb-sync-label">Live Sync Active</span>
       </div>
-      <p class="sb-version">v1.0 · MVP</p>
+      <p class="sb-version">v1.0.4-PRO</p>
     </div>
   </nav>
 
   <!-- ══ MAIN ══════════════════════════════════════════════════════════════════ -->
   <div class="main">
 
-    <!-- TOP BAR -->
+    <!-- System status bar -->
+    <div class="status-bar">
+      <span class="st-item">
+        <span class="glow-dot glow-green"></span>Cloud Sync: Active
+      </span>
+      <span class="st-sep">·</span>
+      <span class="st-item">
+        <span class="glow-dot glow-green"></span>GPS: Fixed
+      </span>
+      <span class="st-sep">·</span>
+      <span class="st-item st-muted">Version 1.0.4-PRO</span>
+      <div class="st-right">
+        <span class="st-item">{workers.length} registered workers</span>
+      </div>
+    </div>
+
+    <!-- Top bar -->
     <header class="topbar">
       <button class="hamburger" onclick={() => sidebarOpen = !sidebarOpen} aria-label="Menu">
         <span></span><span></span><span></span>
@@ -273,140 +283,152 @@
         <h1>ZZ2 Worker Hub</h1>
         <p class="topbar-date">{new Date().toLocaleDateString("en-ZA", { weekday:"long", day:"numeric", month:"long", year:"numeric" })}</p>
       </div>
-      <div class="topbar-chip">
-        <span class="chip-dot"></span>
-        {workers.length} workers
-      </div>
     </header>
 
-    <!-- ══ SECTION: DASHBOARD ═══════════════════════════════════════════════ -->
+    <!-- ══ OVERVIEW ══════════════════════════════════════════════════════════ -->
     <section class="section" data-s="dashboard">
       <div class="section-inner">
-
-        <!-- Tonnage glass card -->
-        <div class="glass-hero">
-          <div class="glass-hero-content">
-            <p class="glass-label">⚖️ &nbsp;Total Tonnage Today</p>
-            <p class="glass-number">
-              {displayTonnage.toFixed(3)}<span class="glass-unit">t</span>
-            </p>
-            <p class="glass-sub">{totalBins} bins · {totalKg.toFixed(0)} kg harvested</p>
+        <p class="section-eyebrow">Today's Performance</p>
+        <div class="kpi-grid">
+          <div class="kpi-tile">
+            <p class="kpi-label">Total Tonnage</p>
+            <p class="kpi-value">{displayTonnage.toFixed(3)}<span class="kpi-unit">t</span></p>
           </div>
-          <div class="glass-gps">
-            <span class="gps-pulse"></span>
-            <span class="gps-coords">
-              GPS: {#if todayLogs.find(l => l.lat)}-23.87°S 30.14°E{:else}Awaiting log…{/if}
-            </span>
+          <div class="kpi-tile">
+            <p class="kpi-label">Bins Logged</p>
+            <p class="kpi-value">{totalBins}</p>
           </div>
-        </div>
-
-        <!-- Stat glass cards -->
-        <div class="stats-grid">
-          <div class="glass-card stat-blue">
-            <p class="sc-icon">👷</p>
-            <p class="sc-label">Active Workers Today</p>
-            <p class="sc-value">{activeWorkerCount}</p>
-            <p class="sc-sub">logged a bin today</p>
+          <div class="kpi-tile">
+            <p class="kpi-label">Active Workers</p>
+            <p class="kpi-value">{activeWorkerCount}</p>
           </div>
-          <div class="glass-card stat-gold">
-            <p class="sc-icon">📦</p>
-            <p class="sc-label">Avg Bin Weight</p>
-            <p class="sc-value">{avgBinWeight.toFixed(1)}<span class="sc-unit">kg</span></p>
-            <p class="sc-sub">per bin logged</p>
+          <div class="kpi-tile">
+            <p class="kpi-label">Avg Bin Weight</p>
+            <p class="kpi-value">{avgBinWeight.toFixed(1)}<span class="kpi-unit">kg</span></p>
           </div>
-          <div class="glass-card stat-purple">
-            <p class="sc-icon">🏆</p>
-            <p class="sc-label">Top Village</p>
-            <p class="sc-value top-v">{topVillage}</p>
-            <p class="sc-sub">highest weight today</p>
+          <div class="kpi-tile">
+            <p class="kpi-label">Total Harvested</p>
+            <p class="kpi-value">{totalKg.toFixed(0)}<span class="kpi-unit">kg</span></p>
+          </div>
+          <div class="kpi-tile">
+            <p class="kpi-label">Top Village</p>
+            <p class="kpi-value kpi-text">{topVillage}</p>
           </div>
         </div>
-
       </div>
     </section>
 
-    <!-- ══ SECTION: WORKERS ══════════════════════════════════════════════════ -->
-    <section class="section section-white" data-s="workers">
+    <!-- ══ PERSONNEL ══════════════════════════════════════════════════════════ -->
+    <section class="section section-alt" data-s="workers">
       <div class="section-inner">
-        <h2 class="section-title">Workers Registry</h2>
+        <div class="section-hdr">
+          <h2 class="section-title">Personnel Registry</h2>
+        </div>
         <div class="two-col">
 
-          <!-- Register form -->
-          <div class="card">
-            <div class="card-header">Register New Worker</div>
+          <!-- Registration form -->
+          <div class="panel">
+            <div class="panel-hdr">New Registration</div>
             <form onsubmit={registerWorker} class="form">
               <div class="field">
                 <label>Full Name</label>
-                <input type="text" bind:value={wName} placeholder="e.g. Thabo Nkosi" required disabled={saving} />
+                <input type="text" bind:value={wName} placeholder="e.g. Thabo Nkosi"
+                       required disabled={saving} />
               </div>
               <div class="field">
                 <label>SA ID Number</label>
-                <input type="text" bind:value={wSaId} placeholder="13-digit SA ID" maxlength="13" required disabled={saving} />
+                <input type="text" bind:value={wSaId} placeholder="13-digit SA ID"
+                       maxlength="13" required disabled={saving} />
               </div>
               <div class="field">
                 <label>Village / Area</label>
-                <input type="text" bind:value={wVillage} placeholder="e.g. Tzaneen" required disabled={saving} />
+                <input type="text" bind:value={wVillage} placeholder="e.g. Tzaneen"
+                       required disabled={saving} />
               </div>
-              <button type="submit" class="btn btn-primary" disabled={saving}>
-                {#if saving}<span class="spinner"></span>Saving…{:else}✓&nbsp;Confirm Registration{/if}
+              <button type="submit" class="btn" disabled={saving}>
+                {#if saving}<span class="spinner"></span>Saving…{:else}Confirm Registration{/if}
               </button>
-              {#if saved}<div class="alert alert-success">Worker registered!</div>{/if}
-              {#if regError}<div class="alert alert-error">{regError}</div>{/if}
+              {#if saved}<div class="alert alert-ok">Worker registered.</div>{/if}
+              {#if regError}<div class="alert alert-err">{regError}</div>{/if}
             </form>
           </div>
 
-          <!-- Workers list -->
-          <div class="card">
-            <div class="card-header">Registered Workers</div>
-            <div class="search-wrap">
-              <span>🔍</span>
-              <input class="search-input" type="text" bind:value={search} placeholder="Filter by village…" />
-              {#if search}<button class="clear-btn" onclick={() => search = ""}>✕</button>{/if}
+          <!-- Personnel table -->
+          <div class="panel">
+            <div class="panel-hdr">
+              Registered Personnel
+              <div class="search-wrap">
+                <svg class="search-icon" viewBox="0 0 16 16" fill="none"
+                     stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                  <circle cx="6.5" cy="6.5" r="4.5"/>
+                  <path d="M11 11l3 3"/>
+                </svg>
+                <input class="search-input" type="text" bind:value={search}
+                       placeholder="Filter by village…" />
+                {#if search}
+                  <button class="clear-btn" onclick={() => search = ""}>×</button>
+                {/if}
+              </div>
             </div>
 
             {#if !dataLoaded}
-              <div class="loading-state">
-                <span class="sprout">🌱</span>
-                <p>Loading…</p>
-              </div>
+              <div class="empty-state"><p>Connecting…</p></div>
             {:else if workers.length === 0}
-              <div class="empty-state"><span>👷</span><p>No workers yet.</p></div>
+              <div class="empty-state"><p>No workers registered.</p></div>
             {:else if filtered.length === 0}
-              <div class="empty-state"><span>🔍</span><p>No match for "{search}".</p></div>
+              <div class="empty-state"><p>No match for "{search}".</p></div>
             {:else}
-              <ul class="list">
-                {#each filtered as w, i}
-                  <li class="list-row worker-row">
-                    <span class="row-num">{filtered.length - i}</span>
-                    <div class="row-info">
-                      <p class="row-name">{w.name}</p>
-                      <p class="row-sub">ID: {w.saId} · {w.village}</p>
-                    </div>
-                    <span class="badge-active">Active</span>
-                    <button class="del-btn" title="Delete" onclick={() => removeWorker(w._id)}>🗑</button>
-                  </li>
-                {/each}
-              </ul>
+              <div class="table-scroll">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Name</th>
+                      <th>SA ID</th>
+                      <th>Village</th>
+                      <th>Status</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {#each filtered as w, i}
+                      <tr class="tr">
+                        <td class="td-n">{filtered.length - i}</td>
+                        <td class="td-name">{w.name}</td>
+                        <td class="td-mono">{w.saId}</td>
+                        <td>{w.village}</td>
+                        <td><span class="glow-dot glow-green" title="Active"></span></td>
+                        <td>
+                          <button class="del-btn" title="Remove worker"
+                                  onclick={() => removeWorker(w._id)}>×</button>
+                        </td>
+                      </tr>
+                    {/each}
+                  </tbody>
+                </table>
+              </div>
             {/if}
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ══ SECTION: YIELD ════════════════════════════════════════════════════ -->
+    <!-- ══ HARVEST LOGGER ═════════════════════════════════════════════════════ -->
     <section class="section" data-s="yield">
       <div class="section-inner">
-        <h2 class="section-title light">Harvest Logger</h2>
+        <div class="section-hdr">
+          <h2 class="section-title">Harvest Logger</h2>
+        </div>
         <div class="two-col">
 
           <!-- Log form -->
-          <div class="card">
-            <div class="card-header harvest-hdr">🌾 &nbsp;Log a Bin</div>
+          <div class="panel">
+            <div class="panel-hdr">Log Bin Entry</div>
             <form onsubmit={logBin} class="form">
               <div class="field">
-                <label>Select Worker</label>
+                <label>Worker</label>
                 <select bind:value={selectedWorker} required disabled={logging}>
-                  <option value="" disabled>-- Choose a worker --</option>
+                  <option value="" disabled>— Select worker —</option>
                   {#each workers as w}
                     <option value={w._id}>{w.name} · {w.village}</option>
                   {/each}
@@ -415,94 +437,130 @@
               <div class="field">
                 <label>Crop Type</label>
                 <select bind:value={cropType} disabled={logging}>
-                  <option>Tomatoes</option><option>Avocados</option><option>Mangoes</option>
-                  <option>Citrus</option><option>Peppers</option><option>Butternut</option><option>Other</option>
+                  <option>Tomatoes</option><option>Avocados</option>
+                  <option>Mangoes</option><option>Citrus</option>
+                  <option>Peppers</option><option>Butternut</option><option>Other</option>
                 </select>
               </div>
               <div class="field">
                 <label>Bin Weight (kg)</label>
-                <input type="number" min="0.1" step="0.1" bind:value={binWeight} placeholder="e.g. 850" required disabled={logging} />
+                <input type="number" min="0.1" step="0.1" bind:value={binWeight}
+                       placeholder="e.g. 850" required disabled={logging} />
               </div>
               <div class="gps-row">
                 {#if gpsStatus === "capturing"}
-                  <span class="gps-tag gps-wait">📡 Capturing GPS…</span>
+                  <span class="gps-tag gps-wait">Capturing GPS…</span>
                 {:else if gpsStatus === "ok"}
-                  <span class="gps-tag gps-ok">✓ GPS captured</span>
+                  <span class="gps-tag gps-ok">GPS Captured</span>
                 {:else if gpsStatus === "denied"}
-                  <span class="gps-tag gps-na">GPS unavailable</span>
+                  <span class="gps-tag gps-na">GPS Unavailable</span>
                 {:else}
-                  <span class="gps-tag">📍 GPS will be captured on submit</span>
+                  <span class="gps-tag">GPS auto-captured on submit</span>
                 {/if}
               </div>
-              <button type="submit" class="btn btn-gold" disabled={logging || !selectedWorker}>
-                {#if logging}<span class="spinner"></span>Saving…{:else}🌾&nbsp;Log Bin{/if}
+              <button type="submit" class="btn" disabled={logging || !selectedWorker}>
+                {#if logging}<span class="spinner"></span>Saving…{:else}Log Bin{/if}
               </button>
-              {#if logged}<div class="alert alert-success">Bin logged!</div>{/if}
-              {#if logError}<div class="alert alert-error">{logError}</div>{/if}
+              {#if logged}<div class="alert alert-ok">Bin logged.</div>{/if}
+              {#if logError}<div class="alert alert-err">{logError}</div>{/if}
             </form>
           </div>
 
-          <!-- Today's logs -->
-          <div class="card">
-            <div class="card-header harvest-hdr">Today's Bins ({totalBins})</div>
+          <!-- Today's bins table -->
+          <div class="panel">
+            <div class="panel-hdr">Today's Bins ({totalBins})</div>
             {#if todayLogs.length === 0}
-              <div class="empty-state"><span>🌾</span><p>No bins logged today.</p></div>
+              <div class="empty-state"><p>No bins logged today.</p></div>
             {:else}
-              <ul class="list log-list">
-                {#each todayLogs as log, i}
-                  <li class="list-row log-row">
-                    <span class="row-num harvest-num">{todayLogs.length - i}</span>
-                    <div class="row-info">
-                      <p class="row-name">{workerName(log.workerId)}</p>
-                      <p class="row-sub">{log.cropType} · {new Date(log.timestamp).toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" })}{log.lat ? " · 📍 GPS" : ""}</p>
-                    </div>
-                    <span class="log-weight">{log.binWeight} kg</span>
-                    <button class="del-btn" title="Delete" onclick={() => removeLog(log._id)}>🗑</button>
-                  </li>
-                {/each}
-              </ul>
+              <div class="table-scroll">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Worker</th>
+                      <th>Crop</th>
+                      <th>kg</th>
+                      <th>Time</th>
+                      <th>GPS</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {#each todayLogs as log, i}
+                      <tr class="tr">
+                        <td class="td-n">{todayLogs.length - i}</td>
+                        <td class="td-name">{workerName(log.workerId)}</td>
+                        <td>{log.cropType}</td>
+                        <td class="td-weight">{log.binWeight}</td>
+                        <td class="td-mono">{new Date(log.timestamp).toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" })}</td>
+                        <td>
+                          {#if log.lat}
+                            <span class="glow-dot glow-green" title="GPS fixed"></span>
+                          {:else}
+                            <span class="td-na">—</span>
+                          {/if}
+                        </td>
+                        <td>
+                          <button class="del-btn" onclick={() => removeLog(log._id)}>×</button>
+                        </td>
+                      </tr>
+                    {/each}
+                  </tbody>
+                </table>
+              </div>
             {/if}
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ══ SECTION: MAP ══════════════════════════════════════════════════════ -->
-    <section class="section section-white" data-s="map">
+    <!-- ══ FIELD MAP ══════════════════════════════════════════════════════════ -->
+    <section class="section section-alt" data-s="map">
       <div class="section-inner">
-        <h2 class="section-title">Field Map <span class="map-tag">Satellite View</span></h2>
-        <p class="section-sub">Pins appear automatically when a bin is logged with GPS data. Allow location access when prompted.</p>
+        <div class="section-hdr">
+          <h2 class="section-title">
+            Field Map
+            <span class="tag">Satellite</span>
+          </h2>
+        </div>
+        <p class="section-sub">GPS pins populate automatically when a bin is logged with location data.</p>
         <div class="map-wrap" bind:this={mapEl}></div>
-        {#if todayLogs.filter(l => l.lat).length === 0}
-          <p class="map-hint">No GPS pins yet — log a bin with location enabled to see pins on the map.</p>
-        {/if}
       </div>
     </section>
 
-    <!-- ══ SECTION: REPORTS ══════════════════════════════════════════════════ -->
+    <!-- ══ REPORTS ════════════════════════════════════════════════════════════ -->
     <section class="section" data-s="reports">
       <div class="section-inner">
-        <h2 class="section-title light">Reports &amp; Export</h2>
-        <div class="report-cards">
-          <div class="report-card">
-            <p class="rcard-icon">📊</p>
-            <p class="rcard-title">Daily Summary</p>
-            <p class="rcard-sub">{totalBins} bins · {totalTonnage.toFixed(3)} tons · {activeWorkerCount} workers</p>
+        <div class="section-hdr">
+          <h2 class="section-title">Reports</h2>
+        </div>
+        <div class="kpi-grid kpi-grid--sm">
+          <div class="kpi-tile">
+            <p class="kpi-label">Daily Bins</p>
+            <p class="kpi-value">{totalBins}</p>
           </div>
-          <div class="report-card">
-            <p class="rcard-icon">🏆</p>
-            <p class="rcard-title">Top Performer</p>
-            <p class="rcard-sub">Village: {topVillage}</p>
+          <div class="kpi-tile">
+            <p class="kpi-label">Total Tonnage</p>
+            <p class="kpi-value">{totalTonnage.toFixed(3)}<span class="kpi-unit">t</span></p>
           </div>
-          <div class="report-card">
-            <p class="rcard-icon">⚖️</p>
-            <p class="rcard-title">Average Bin</p>
-            <p class="rcard-sub">{avgBinWeight.toFixed(1)} kg per bin</p>
+          <div class="kpi-tile">
+            <p class="kpi-label">Active Workers</p>
+            <p class="kpi-value">{activeWorkerCount}</p>
+          </div>
+          <div class="kpi-tile">
+            <p class="kpi-label">Avg Bin Weight</p>
+            <p class="kpi-value">{avgBinWeight.toFixed(1)}<span class="kpi-unit">kg</span></p>
           </div>
         </div>
         <div class="export-row">
-          <p class="export-note">📋 Export today's harvest data for payroll processing</p>
-          <button class="btn btn-export" onclick={exportCSV}>⬇&nbsp; Export to CSV for Payroll</button>
+          <p class="export-note">Export today's harvest data for payroll processing</p>
+          <button class="btn btn-export" onclick={exportCSV}>
+            <svg class="btn-icon" viewBox="0 0 16 16" fill="none"
+                 stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <path d="M8 2v8M4 8l4 4 4-4M2 14h12"/>
+            </svg>
+            Export to CSV
+          </button>
         </div>
       </div>
     </section>
@@ -510,382 +568,380 @@
   </div><!-- /main -->
 </div><!-- /shell -->
 
+<!-- Mobile bottom nav -->
+<nav class="bottom-nav" aria-label="Section navigation">
+  {#each navItems as item}
+    <button
+      class="bn-item"
+      class:active={activeSection === item.id}
+      onclick={() => scrollTo(item.id)}
+    >
+      <span class="bn-label">{item.label}</span>
+      {#if item.id === "dashboard" && totalBins > 0}
+        <span class="bn-badge">{totalBins}</span>
+      {/if}
+    </button>
+  {/each}
+</nav>
+
 <style>
-  /* ══════════════════════════════════════════════════════════════════════════════
-     MD3 DESIGN TOKENS
-  ══════════════════════════════════════════════════════════════════════════════ */
+  /* ══ DESIGN TOKENS ═══════════════════════════════════════════════════════════ */
   :global(*), :global(*::before), :global(*::after) { box-sizing: border-box; margin: 0; padding: 0; }
   :global(body) {
-    font-family: 'Inter', system-ui, sans-serif;
-    background: #0d1f0d;
-    color: #1a1a1a;
-    --c-primary:       #2E7D32;
-    --c-primary-dark:  #1B5E20;
-    --c-primary-light: #4CAF50;
-    --c-gold:          #FF8F00;
-    --c-gold-dark:     #E65100;
-    --c-surface:       #FFFFFF;
-    --c-bg:            #0d1f0d;
-    --c-bg2:           #F3F7F3;
-    --radius-full:     9999px;
-    --radius-xl:       20px;
-    --radius-lg:       14px;
-    --radius-md:       10px;
-    --shadow-card:     0 4px 24px rgba(0,0,0,0.12);
-    --shadow-deep:     0 8px 40px rgba(0,0,0,0.28);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: #1a1f1c;
+    color: #cdd8ce;
+    --bg:           #1a1f1c;
+    --bg-alt:       #1c2220;
+    --bg-panel:     #202621;
+    --bg-elevated:  #252d26;
+    --border:       rgba(255,255,255,0.07);
+    --border-mid:   rgba(255,255,255,0.11);
+    --text-1:       #dce8dd;
+    --text-2:       #7a8f7d;
+    --text-3:       #445447;
+    --olive:        #4a7c59;
+    --olive-dark:   #2a3d30;
+    --olive-light:  #5c9470;
+    --glow-green:   #22c55e;
+    --glow-amber:   #f59e0b;
+    --r-sm:         3px;
+    --r-md:         6px;
+    --shadow:       0 1px 6px rgba(0,0,0,0.35);
+  }
+
+  /* ══ CORNER ORCHARD PHOTO ════════════════════════════════════════════════════ */
+  .corner-photo {
+    position: fixed;
+    bottom: 0; right: 0;
+    width: 42vw; height: 52vh;
+    background-image: url('/waqar-mujahid-NU_s4KI_zME-unsplash.jpg');
+    background-size: cover;
+    background-position: center;
+    opacity: 0.07;
+    pointer-events: none;
+    z-index: 0;
+    mask-image: linear-gradient(to top left, rgba(0,0,0,0.7) 0%, transparent 65%);
+    -webkit-mask-image: linear-gradient(to top left, rgba(0,0,0,0.7) 0%, transparent 65%);
   }
 
   /* ══ SHELL ═══════════════════════════════════════════════════════════════════ */
-  .shell { display: flex; min-height: 100vh; }
+  .shell { display: flex; min-height: 100vh; position: relative; z-index: 1; }
 
   /* ══ SIDEBAR ═════════════════════════════════════════════════════════════════ */
   .sidebar {
-    width: 256px;
-    min-height: 100vh;
-    background: #0a160a;
-    border-right: 1px solid rgba(255,255,255,0.07);
-    display: flex;
-    flex-direction: column;
-    position: sticky;
-    top: 0;
-    height: 100vh;
-    overflow-y: auto;
-    flex-shrink: 0;
-    z-index: 100;
-    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+    width: 216px; min-height: 100vh;
+    background: #111613;
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    position: sticky; top: 0; height: 100vh;
+    overflow-y: auto; flex-shrink: 0; z-index: 100;
+    transition: transform 0.25s ease;
   }
-
   .sb-brand {
-    display: flex; align-items: center; gap: 0.75rem;
-    padding: 1.5rem 1.25rem 1.25rem;
-    border-bottom: 1px solid rgba(255,255,255,0.07);
+    padding: 1.2rem 1rem 0.9rem;
+    border-bottom: 1px solid var(--border);
   }
-  .sb-leaf  { font-size: 2rem; }
-  .sb-app   { font-size: 0.65rem; color: #81c784; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; }
-  .sb-farm  { font-size: 1rem; font-weight: 800; color: #fff; margin-top: 0.1rem; }
+  .sb-app  { font-size: 0.58rem; color: var(--olive-light); letter-spacing: 0.18em; text-transform: uppercase; font-weight: 700; margin-bottom: 0.2rem; }
+  .sb-farm { font-size: 0.95rem; font-weight: 800; color: var(--text-1); letter-spacing: -0.01em; }
 
-  .sb-nav { list-style: none; padding: 1rem 0.75rem; flex: 1; display: flex; flex-direction: column; gap: 0.25rem; }
+  .sb-nav { list-style: none; padding: 0.65rem 0.5rem; flex: 1; display: flex; flex-direction: column; gap: 0.1rem; }
   .sb-item {
-    width: 100%; display: flex; align-items: center; gap: 0.75rem;
-    padding: 0.75rem 1rem; border-radius: var(--radius-full);
-    background: none; border: none; color: #a5d6a7;
-    font-family: 'Inter', sans-serif; font-size: 0.88rem; font-weight: 500;
-    cursor: pointer; text-align: left;
-    transition: background 0.18s, color 0.18s;
-    position: relative;
+    width: 100%; display: flex; align-items: center; justify-content: space-between;
+    padding: 0.5rem 0.8rem; border-radius: var(--r-sm);
+    background: none; border: none; color: var(--text-2);
+    font-family: 'Inter', sans-serif; font-size: 0.78rem; font-weight: 500;
+    cursor: pointer; text-align: left; letter-spacing: 0.01em;
+    transition: background 0.12s, color 0.12s;
   }
-  .sb-item:hover { background: rgba(255,255,255,0.07); color: #fff; }
-  .sb-item.active { background: var(--c-primary); color: #fff; font-weight: 700; box-shadow: 0 4px 16px rgba(46,125,50,0.35); }
-  .sb-icon  { font-size: 1.1rem; width: 1.3rem; text-align: center; }
+  .sb-item:hover  { background: rgba(255,255,255,0.04); color: var(--text-1); }
+  .sb-item.active {
+    background: var(--olive-dark); color: var(--text-1); font-weight: 600;
+    border-left: 2px solid var(--olive); padding-left: calc(0.8rem - 2px);
+  }
   .sb-label { flex: 1; }
   .sb-badge {
-    background: var(--c-gold); color: #fff;
-    font-size: 0.65rem; font-weight: 800;
-    padding: 0.1rem 0.45rem; border-radius: var(--radius-full);
+    background: var(--glow-amber); color: #000;
+    font-size: 0.56rem; font-weight: 800;
+    padding: 0.05rem 0.38rem; border-radius: 999px; min-width: 16px; text-align: center;
   }
+  .sb-footer { padding: 0.8rem 1rem; border-top: 1px solid var(--border); }
+  .sb-sync-row { display: flex; align-items: center; gap: 0.45rem; margin-bottom: 0.2rem; }
+  .sb-sync-label { font-size: 0.65rem; color: var(--text-2); }
+  .sb-version    { font-size: 0.6rem; color: var(--text-3); }
 
-  .sb-footer { padding: 1rem 1.25rem; border-top: 1px solid rgba(255,255,255,0.07); }
-  .sb-pulse-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem; }
-  .pulse-dot {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: #69f0ae; box-shadow: 0 0 8px #69f0ae;
-    animation: pulse 2s infinite; flex-shrink: 0;
+  /* ══ GLOW DOTS ═══════════════════════════════════════════════════════════════ */
+  .glow-dot {
+    display: inline-block; flex-shrink: 0;
+    width: 8px; height: 8px; border-radius: 50%;
   }
-  .sb-live    { font-size: 0.72rem; color: #81c784; font-weight: 600; }
-  .sb-version { font-size: 0.65rem; color: #4a7a4a; }
+  .glow-green { background: var(--glow-green); box-shadow: 0 0 10px var(--glow-green); }
+  .glow-amber { background: var(--glow-amber); box-shadow: 0 0 10px var(--glow-amber); }
 
   /* ══ MAIN ════════════════════════════════════════════════════════════════════ */
   .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 
-  /* ── Top bar ── */
+  /* System status bar */
+  .status-bar {
+    background: #0f1410;
+    border-bottom: 1px solid var(--border);
+    height: 28px; padding: 0 1.5rem;
+    display: flex; align-items: center; gap: 0.8rem;
+    font-size: 0.65rem; color: var(--text-2); letter-spacing: 0.02em;
+    position: sticky; top: 0; z-index: 60;
+    flex-shrink: 0;
+  }
+  .st-item  { display: flex; align-items: center; gap: 0.38rem; }
+  .st-sep   { color: var(--text-3); }
+  .st-muted { color: var(--text-3); }
+  .st-right { margin-left: auto; }
+
+  /* Top bar */
   .topbar {
-    background: #0a160a;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-    padding: 0 1.5rem;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    position: sticky;
-    top: 0;
-    z-index: 50;
+    background: var(--bg-alt);
+    border-bottom: 1px solid var(--border);
+    padding: 0 1.5rem; height: 50px;
+    display: flex; align-items: center; gap: 1rem;
+    position: sticky; top: 28px; z-index: 50; flex-shrink: 0;
   }
   .hamburger {
-    display: none; flex-direction: column; gap: 4px; background: none; border: none; cursor: pointer; padding: 4px;
+    display: none; flex-direction: column; gap: 4px;
+    background: none; border: none; cursor: pointer; padding: 4px;
   }
-  .hamburger span { display: block; width: 20px; height: 2px; background: #a5d6a7; border-radius: 2px; }
+  .hamburger span { display: block; width: 18px; height: 1.5px; background: var(--text-2); border-radius: 1px; }
   .topbar-brand { flex: 1; }
-  .topbar-brand h1 { font-size: 1rem; font-weight: 800; color: #fff; }
-  .topbar-date   { font-size: 0.68rem; color: #4a7a4a; margin-top: 0.1rem; }
-  .topbar-chip {
-    display: flex; align-items: center; gap: 0.4rem;
-    background: rgba(46,125,50,0.3); border: 1px solid rgba(76,175,80,0.4);
-    color: #a5d6a7; font-size: 0.75rem; font-weight: 600;
-    padding: 0.3rem 0.85rem; border-radius: var(--radius-full);
-    white-space: nowrap;
-  }
-  .chip-dot { width: 6px; height: 6px; border-radius: 50%; background: #69f0ae; box-shadow: 0 0 6px #69f0ae; animation: pulse 2s infinite; }
+  .topbar-brand h1 { font-size: 0.88rem; font-weight: 700; color: var(--text-1); letter-spacing: 0.01em; }
+  .topbar-date    { font-size: 0.62rem; color: var(--text-3); margin-top: 0.1rem; }
 
   /* ══ SECTIONS ════════════════════════════════════════════════════════════════ */
-  .section       { padding: 2.5rem 1.5rem; background: var(--c-bg); }
-  .section-white { background: var(--c-bg2); }
+  .section     { padding: 1.75rem 1.5rem; background: var(--bg); }
+  .section-alt { background: var(--bg-alt); }
   .section-inner { max-width: 1200px; margin: 0 auto; }
-  .section-title { font-size: 1.4rem; font-weight: 800; color: #fff; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; }
-  .section-title.light { color: #fff; }
-  .section-white .section-title { color: var(--c-primary-dark); }
-  .section-sub { font-size: 0.82rem; color: #5a8a5a; margin-bottom: 1rem; margin-top: -1rem; }
-  .map-tag { background: var(--c-gold); color: #fff; font-size: 0.65rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: var(--radius-full); letter-spacing: 0.05em; }
+  .section-hdr {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1.1rem;
+  }
+  .section-eyebrow {
+    font-size: 0.6rem; font-weight: 700; color: var(--text-3);
+    text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 0.6rem;
+  }
+  .section-title { font-size: 0.95rem; font-weight: 700; color: var(--text-1); display: flex; align-items: center; gap: 0.6rem; }
+  .section-sub   { font-size: 0.75rem; color: var(--text-2); margin-bottom: 0.85rem; margin-top: -0.6rem; }
+  .tag {
+    font-size: 0.56rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 0.12rem 0.45rem; border-radius: var(--r-sm);
+    background: rgba(74,124,89,0.18); color: var(--olive-light);
+    border: 1px solid rgba(74,124,89,0.35);
+  }
 
-  /* ══ GLASS HERO ══════════════════════════════════════════════════════════════ */
-  .glass-hero {
-    background: rgba(255,255,255,0.07);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: var(--radius-xl);
-    padding: 2rem 2.5rem;
-    margin-bottom: 1.25rem;
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
+  /* ══ KPI GRID ════════════════════════════════════════════════════════════════ */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1px; background: var(--border-mid);
+    border: 1px solid var(--border-mid); border-radius: var(--r-md);
+    overflow: hidden;
+  }
+  .kpi-grid--sm { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+  .kpi-tile {
+    background: var(--bg-panel); padding: 1rem 1.1rem;
+    transition: background 0.12s;
+  }
+  .kpi-tile:hover { background: var(--bg-elevated); }
+  .kpi-label { font-size: 0.6rem; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.45rem; }
+  .kpi-value { font-size: 1.7rem; font-weight: 800; color: var(--text-1); line-height: 1; letter-spacing: -0.03em; }
+  .kpi-unit  { font-size: 0.78rem; font-weight: 400; color: var(--text-2); margin-left: 0.15rem; }
+  .kpi-text  { font-size: 1rem; }
+
+  /* ══ TWO-COL ═════════════════════════════════════════════════════════════════ */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0; }
+
+  /* ══ PANELS ══════════════════════════════════════════════════════════════════ */
+  .panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .panel-hdr {
+    padding: 0.55rem 0.9rem;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border);
+    font-size: 0.65rem; font-weight: 700;
+    color: var(--text-2); text-transform: uppercase; letter-spacing: 0.1em;
+    display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
     flex-wrap: wrap;
-    gap: 1rem;
   }
-  .glass-label { font-size: 0.75rem; font-weight: 700; color: #a5d6a7; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; }
-  .glass-number { font-size: 4rem; font-weight: 900; color: #fff; line-height: 1; letter-spacing: -0.03em; }
-  .glass-unit   { font-size: 1.6rem; font-weight: 600; color: #81c784; margin-left: 0.25rem; }
-  .glass-sub    { font-size: 0.8rem; color: #81c784; margin-top: 0.4rem; }
-  .glass-gps    { display: flex; align-items: center; gap: 0.6rem; }
-  .gps-pulse {
-    width: 10px; height: 10px; border-radius: 50%;
-    background: var(--c-gold); box-shadow: 0 0 0 0 rgba(255,143,0,0.7);
-    animation: gps-ping 1.5s infinite;
-  }
-  .gps-coords { font-size: 0.78rem; color: #ffc107; font-weight: 600; font-family: monospace; }
 
-  /* ══ STATS GLASS CARDS ═══════════════════════════════════════════════════════ */
-  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
-  .glass-card {
-    background: rgba(255,255,255,0.08);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: var(--radius-xl);
-    padding: 1.5rem;
-    transition: transform 0.2s, box-shadow 0.2s;
+  /* ══ HIGH-DENSITY DATA TABLES ════════════════════════════════════════════════ */
+  .table-scroll { overflow-y: auto; max-height: 340px; }
+  .data-table   { width: 100%; border-collapse: collapse; font-size: 0.75rem; color: var(--text-1); }
+  .data-table thead tr  { border-bottom: 1px solid var(--border-mid); }
+  .data-table th {
+    padding: 0.38rem 0.7rem;
+    font-size: 0.58rem; font-weight: 700; color: var(--text-3);
+    text-transform: uppercase; letter-spacing: 0.1em; text-align: left;
+    background: var(--bg-elevated); position: sticky; top: 0; z-index: 2;
   }
-  .glass-card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.3); }
-  .stat-blue   { border-top: 3px solid #42a5f5; }
-  .stat-gold   { border-top: 3px solid var(--c-gold); }
-  .stat-purple { border-top: 3px solid #ab47bc; }
-  .sc-icon  { font-size: 1.5rem; margin-bottom: 0.5rem; }
-  .sc-label { font-size: 0.68rem; font-weight: 700; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem; }
-  .sc-value { font-size: 2.2rem; font-weight: 900; color: #fff; line-height: 1; }
-  .sc-unit  { font-size: 1rem; font-weight: 500; color: rgba(255,255,255,0.5); }
-  .sc-sub   { font-size: 0.7rem; color: rgba(255,255,255,0.45); margin-top: 0.35rem; }
-  .top-v    { font-size: 1.4rem; word-break: break-word; }
-
-  /* ══ TWO-COLUMN LAYOUT ═══════════════════════════════════════════════════════ */
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
-
-  /* ══ CARDS ═══════════════════════════════════════════════════════════════════ */
-  .card { background: #fff; border-radius: var(--radius-xl); overflow: hidden; box-shadow: var(--shadow-card); }
-  .card-header {
-    background: var(--c-primary-dark);
-    color: #fff; padding: 1rem 1.25rem;
-    font-size: 0.88rem; font-weight: 700; letter-spacing: 0.02em;
-  }
-  .harvest-hdr { background: var(--c-gold-dark); }
+  .data-table td { padding: 0.34rem 0.7rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .tr:hover td  { background: rgba(255,255,255,0.02); }
+  .tr:last-child td { border-bottom: none; }
+  .td-n      { color: var(--text-3); font-size: 0.62rem; width: 26px; }
+  .td-name   { font-weight: 600; }
+  .td-mono   { font-family: 'Courier New', monospace; font-size: 0.7rem; color: var(--text-2); letter-spacing: 0.04em; }
+  .td-weight { font-weight: 700; color: var(--olive-light); }
+  .td-na     { color: var(--text-3); }
 
   /* ══ FORM ════════════════════════════════════════════════════════════════════ */
-  .form { padding: 1.25rem; display: flex; flex-direction: column; gap: 0.9rem; }
-  .field { display: flex; flex-direction: column; gap: 0.3rem; }
+  .form  { padding: 0.9rem; display: flex; flex-direction: column; gap: 0.65rem; }
+  .field { display: flex; flex-direction: column; gap: 0.28rem; }
   .field label {
-    font-size: 0.7rem; font-weight: 700; color: var(--c-primary);
-    text-transform: uppercase; letter-spacing: 0.07em;
+    font-size: 0.6rem; font-weight: 700; color: var(--text-3);
+    text-transform: uppercase; letter-spacing: 0.1em;
   }
   .field input, .field select {
-    padding: 0.72rem 0.9rem;
-    border: 1.5px solid #e0e0e0; border-radius: var(--radius-md);
-    font-family: 'Inter', sans-serif; font-size: 0.93rem; color: #1a1a1a;
-    background: #fafafa; transition: border-color 0.15s, box-shadow 0.15s; width: 100%;
+    padding: 0.5rem 0.7rem;
+    background: var(--bg); border: 1px solid var(--border-mid); border-radius: var(--r-sm);
+    font-family: 'Inter', sans-serif; font-size: 0.8rem; color: var(--text-1); width: 100%;
+    transition: border-color 0.12s;
   }
   .field input:focus, .field select:focus {
-    outline: none; border-color: var(--c-primary);
-    box-shadow: 0 0 0 3px rgba(46,125,50,0.15);
+    outline: none; border-color: var(--olive);
+    box-shadow: 0 0 0 2px rgba(74,124,89,0.15);
   }
-  .field input:disabled, .field select:disabled { opacity: 0.55; }
+  .field input:disabled, .field select:disabled { opacity: 0.4; }
+  .field select option { background: var(--bg-panel); }
 
-  /* ══ BUTTONS ═════════════════════════════════════════════════════════════════ */
+  /* ══ BUTTONS — Muted Olive with 2px border ═══════════════════════════════════ */
   .btn {
-    width: 100%; padding: 0.85rem; border: none; border-radius: var(--radius-full);
-    font-family: 'Inter', sans-serif; font-size: 0.92rem; font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+    padding: 0.55rem 1rem; width: 100%; margin-top: 0.2rem;
+    background: var(--olive-dark); color: #bfd4bf;
+    border: 2px solid var(--olive); border-radius: var(--r-sm);
+    font-family: 'Inter', sans-serif; font-size: 0.78rem; font-weight: 600;
     cursor: pointer; letter-spacing: 0.03em;
-    display: flex; align-items: center; justify-content: center; gap: 0.4rem;
-    transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
-    margin-top: 0.25rem;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
   }
-  .btn:hover:not(:disabled)  { transform: translateY(-2px); filter: brightness(1.08); box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
-  .btn:active:not(:disabled) { transform: none; }
-  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  .btn-primary { background: var(--c-primary); color: #fff; box-shadow: 0 2px 12px rgba(46,125,50,0.3); }
-  .btn-gold    { background: var(--c-gold);    color: #fff; box-shadow: 0 2px 12px rgba(255,143,0,0.3); }
+  .btn:hover:not(:disabled)  { background: #334a38; border-color: var(--olive-light); color: #d5e8d5; }
+  .btn:active:not(:disabled) { background: #243329; }
+  .btn:disabled { opacity: 0.38; cursor: not-allowed; }
+
+  .btn-export {
+    width: auto; background: transparent;
+    color: var(--text-2); border-color: var(--border-mid);
+  }
+  .btn-export:hover { border-color: var(--olive); color: var(--text-1); background: var(--olive-dark); }
+  .btn-icon { width: 13px; height: 13px; }
+
   .del-btn {
-    background: none; border: 1px solid #ffcdd2; border-radius: var(--radius-md);
-    color: #ef5350; font-size: 0.85rem; cursor: pointer; padding: 0.3rem 0.45rem;
-    transition: background 0.15s, transform 0.1s; line-height: 1; flex-shrink: 0;
+    background: none; border: 1px solid rgba(220,80,80,0.25); border-radius: var(--r-sm);
+    color: #c47070; font-size: 0.82rem; font-weight: 700;
+    cursor: pointer; padding: 0.08rem 0.32rem; line-height: 1;
+    transition: background 0.12s;
   }
-  .del-btn:hover { background: #ffebee; transform: scale(1.1); }
+  .del-btn:hover { background: rgba(220,80,80,0.1); color: #e08080; }
 
   /* ══ ALERTS ══════════════════════════════════════════════════════════════════ */
-  .alert { padding: 0.65rem 1rem; border-radius: var(--radius-md); font-size: 0.83rem; font-weight: 600; text-align: center; }
-  .alert-success { background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
-  .alert-error   { background: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
+  .alert { padding: 0.45rem 0.7rem; border-radius: var(--r-sm); font-size: 0.72rem; font-weight: 600; }
+  .alert-ok  { background: rgba(34,197,94,0.07);  color: #4ade80; border: 1px solid rgba(34,197,94,0.18); }
+  .alert-err { background: rgba(220,80,80,0.07);  color: #f08080; border: 1px solid rgba(220,80,80,0.18); }
 
-  /* ══ GPS ROW ═════════════════════════════════════════════════════════════════ */
+  /* ══ GPS ═════════════════════════════════════════════════════════════════════ */
   .gps-row { display: flex; align-items: center; }
-  .gps-tag { font-size: 0.74rem; padding: 0.3rem 0.75rem; border-radius: var(--radius-full); background: rgba(0,0,0,0.05); color: #666; }
-  .gps-ok   { background: #e8f5e9; color: #1b5e20; }
-  .gps-wait { background: #fff8e1; color: #e65100; }
-  .gps-na   { background: #ffebee; color: #c62828; }
-
-  /* ══ LIST ROWS ═══════════════════════════════════════════════════════════════ */
-  .list { list-style: none; max-height: 380px; overflow-y: auto; }
-  .list-row {
-    display: flex; align-items: center; gap: 0.75rem;
-    padding: 0.75rem 1.1rem;
-    border-bottom: 1px solid #f0f0f0;
-    transition: background 0.15s;
-    cursor: default;
-  }
-  .list-row:last-child { border-bottom: none; }
-  .worker-row:hover { background: rgba(100, 221, 23, 0.08); }
-  .log-row:hover    { background: rgba(255,143,0,0.07); }
-  .row-num {
-    width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
-    background: var(--c-primary); color: #fff;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 0.68rem; font-weight: 800;
-  }
-  .harvest-num { background: var(--c-gold-dark); }
-  .row-info  { flex: 1; min-width: 0; }
-  .row-name  { font-size: 0.88rem; font-weight: 700; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .row-sub   { font-size: 0.72rem; color: #888; margin-top: 0.1rem; }
-  .badge-active { background: #e8f5e9; color: var(--c-primary); font-size: 0.65rem; font-weight: 700; padding: 0.15rem 0.55rem; border-radius: var(--radius-full); border: 1px solid #c8e6c9; flex-shrink: 0; }
-  .log-weight { font-size: 0.88rem; font-weight: 800; color: var(--c-gold-dark); white-space: nowrap; }
+  .gps-tag { font-size: 0.68rem; padding: 0.22rem 0.55rem; border-radius: var(--r-sm); background: var(--bg); color: var(--text-3); border: 1px solid var(--border); }
+  .gps-ok   { color: #4ade80; border-color: rgba(34,197,94,0.25); }
+  .gps-wait { color: var(--glow-amber); border-color: rgba(245,158,11,0.25); }
+  .gps-na   { color: #f08080; border-color: rgba(220,80,80,0.25); }
 
   /* ══ SEARCH ══════════════════════════════════════════════════════════════════ */
   .search-wrap {
-    display: flex; align-items: center; gap: 0.5rem;
-    margin: 0.85rem 1.1rem;
-    background: #f4f4f4; border: 1.5px solid #e8e8e8;
-    border-radius: var(--radius-full); padding: 0.48rem 1rem;
-    transition: border-color 0.15s;
+    display: flex; align-items: center; gap: 0.38rem;
+    background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-sm);
+    padding: 0.28rem 0.55rem; transition: border-color 0.12s; flex: 1; max-width: 200px;
   }
-  .search-wrap:focus-within { border-color: var(--c-primary); background: #fff; }
-  .search-input { flex: 1; border: none; background: transparent; font-family: 'Inter', sans-serif; font-size: 0.88rem; color: #1a1a1a; outline: none; }
-  .search-input::placeholder { color: #bbb; }
-  .clear-btn { background: none; border: none; color: #bbb; cursor: pointer; font-size: 0.75rem; }
-  .clear-btn:hover { color: #555; }
+  .search-wrap:focus-within { border-color: var(--olive); }
+  .search-icon  { width: 11px; height: 11px; color: var(--text-3); flex-shrink: 0; }
+  .search-input { flex: 1; border: none; background: transparent; font-family: 'Inter', sans-serif; font-size: 0.72rem; color: var(--text-1); outline: none; }
+  .search-input::placeholder { color: var(--text-3); }
+  .clear-btn    { background: none; border: none; color: var(--text-3); cursor: pointer; font-size: 0.72rem; line-height: 1; }
+  .clear-btn:hover { color: var(--text-1); }
 
-  /* ══ STATES ══════════════════════════════════════════════════════════════════ */
-  .loading-state { padding: 2.5rem 1rem; text-align: center; }
-  .sprout { font-size: 2.5rem; display: block; animation: grow 1.2s ease-in-out infinite alternate; margin-bottom: 0.5rem; }
-  .loading-state p { font-size: 0.85rem; color: #999; }
-  .empty-state  { padding: 2rem 1rem; text-align: center; color: #aaa; }
-  .empty-state span { font-size: 2rem; display: block; margin-bottom: 0.4rem; }
-  .empty-state p { font-size: 0.85rem; font-weight: 600; }
+  /* ══ EMPTY / LOADING ═════════════════════════════════════════════════════════ */
+  .empty-state { padding: 1.75rem 1rem; text-align: center; }
+  .empty-state p { font-size: 0.75rem; color: var(--text-3); }
 
   /* ══ MAP ═════════════════════════════════════════════════════════════════════ */
-  .map-wrap { height: 480px; border-radius: var(--radius-xl); overflow: hidden; box-shadow: var(--shadow-deep); }
-  .map-hint { font-size: 0.78rem; color: #5a8a5a; text-align: center; margin-top: 0.75rem; }
+  .map-wrap { height: 420px; border-radius: var(--r-md); overflow: hidden; border: 1px solid var(--border); }
   :global(.map-pin) {
-    width: 36px; height: 36px; background: var(--c-gold); border-radius: 50% 50% 50% 0;
-    transform: rotate(-45deg); display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3); border: 2px solid #fff;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--glow-green); box-shadow: 0 0 8px var(--glow-green);
   }
-  :global(.map-pin span) { transform: rotate(45deg); font-size: 1rem; }
 
-  /* ══ REPORTS ═════════════════════════════════════════════════════════════════ */
-  .report-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; }
-  .report-card {
-    background: rgba(255,255,255,0.07);
-    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: var(--radius-xl); padding: 1.5rem;
-    transition: transform 0.2s;
+  /* ══ EXPORT ROW ══════════════════════════════════════════════════════════════ */
+  .export-row {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+    padding-top: 1.1rem; margin-top: 1.1rem;
+    border-top: 1px solid var(--border);
   }
-  .report-card:hover { transform: translateY(-3px); }
-  .rcard-icon  { font-size: 2rem; margin-bottom: 0.6rem; }
-  .rcard-title { font-size: 0.9rem; font-weight: 700; color: #fff; margin-bottom: 0.3rem; }
-  .rcard-sub   { font-size: 0.78rem; color: rgba(255,255,255,0.55); }
-  .export-row  { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
-  .export-note { font-size: 0.82rem; color: #81c784; }
-  .btn-export  {
-    background: transparent; color: #fff; border: 2px solid var(--c-primary-light);
-    border-radius: var(--radius-full); padding: 0.75rem 1.75rem;
-    font-family: 'Inter', sans-serif; font-size: 0.88rem; font-weight: 700; cursor: pointer;
-    transition: background 0.18s, color 0.18s; white-space: nowrap;
-    display: inline-flex; align-items: center; gap: 0.4rem; width: auto;
-  }
-  .btn-export:hover { background: var(--c-primary-light); color: #fff; }
+  .export-note { font-size: 0.72rem; color: var(--text-2); }
 
-  /* ══ OVERLAY (mobile) ════════════════════════════════════════════════════════ */
-  .overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.55);
-    z-index: 90; backdrop-filter: blur(2px);
-  }
+  /* ══ OVERLAY ═════════════════════════════════════════════════════════════════ */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 90; }
 
   /* ══ SPINNER ═════════════════════════════════════════════════════════════════ */
   .spinner {
-    width: 14px; height: 14px; border-radius: 50%;
-    border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+    width: 11px; height: 11px; border-radius: 50%;
+    border: 1.5px solid rgba(200,220,200,0.25); border-top-color: #bfd4bf;
     animation: spin 0.7s linear infinite; flex-shrink: 0;
   }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ══ ANIMATIONS ══════════════════════════════════════════════════════════════ */
-  @keyframes pulse   { 0%,100% { opacity:1; } 50% { opacity:0.35; } }
-  @keyframes spin    { to { transform: rotate(360deg); } }
-  @keyframes grow    { from { transform: scale(0.85); } to { transform: scale(1.15); } }
-  @keyframes gps-ping {
-    0%   { box-shadow: 0 0 0 0 rgba(255,193,7,0.7); }
-    70%  { box-shadow: 0 0 0 10px rgba(255,193,7,0); }
-    100% { box-shadow: 0 0 0 0 rgba(255,193,7,0); }
-  }
+  /* ══ MOBILE BOTTOM NAV ═══════════════════════════════════════════════════════ */
+  .bottom-nav { display: none; }
 
   /* ══ RESPONSIVE ══════════════════════════════════════════════════════════════ */
-
-  /* Tablet */
   @media (max-width: 1024px) {
-    .stats-grid  { grid-template-columns: repeat(3,1fr); }
-    .two-col     { grid-template-columns: 1fr; }
-    .report-cards { grid-template-columns: 1fr 1fr; }
+    .two-col { grid-template-columns: 1fr; }
+    .kpi-grid { grid-template-columns: repeat(3,1fr); }
   }
 
-  /* Mobile: sidebar off-canvas */
   @media (max-width: 768px) {
-    .sidebar {
-      position: fixed; top: 0; left: 0; height: 100vh;
-      transform: translateX(-100%); z-index: 95;
+    .sidebar { position: fixed; top: 0; left: 0; height: 100vh; transform: translateX(-100%); z-index: 95; }
+    .sidebar.open { transform: translateX(0); box-shadow: 4px 0 20px rgba(0,0,0,0.5); }
+    .hamburger { display: flex; }
+    .main      { padding-bottom: 56px; }
+    .section   { padding: 1.25rem 1rem; }
+    .map-wrap  { height: 300px; }
+    .status-bar { padding: 0 1rem; gap: 0.6rem; font-size: 0.6rem; }
+    .topbar    { top: 28px; padding: 0 1rem; }
+    .kpi-grid  { grid-template-columns: repeat(2,1fr); }
+
+    .bottom-nav {
+      display: flex; position: fixed; bottom: 0; left: 0; right: 0;
+      background: #0f1410; border-top: 1px solid var(--border);
+      z-index: 200; padding-bottom: env(safe-area-inset-bottom, 0px);
     }
-    .sidebar.open { transform: translateX(0); box-shadow: 4px 0 24px rgba(0,0,0,0.5); }
-    .hamburger   { display: flex; }
-    .main        { margin-left: 0; }
-    .stats-grid  { grid-template-columns: 1fr 1fr; }
-    .glass-number { font-size: 2.8rem; }
-    .section     { padding: 1.75rem 1rem; }
-    .map-wrap    { height: 340px; }
-    .report-cards { grid-template-columns: 1fr; }
-    .export-row  { flex-direction: column; align-items: stretch; }
-    .btn-export  { width: 100%; justify-content: center; }
+    .bn-item {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      gap: 0.15rem; padding: 0.65rem 0.25rem; position: relative;
+      background: none; border: none; cursor: pointer;
+      color: var(--text-3); font-family: 'Inter', sans-serif;
+      transition: color 0.12s;
+    }
+    .bn-item:hover  { color: var(--text-2); }
+    .bn-item.active { color: var(--text-1); border-top: 2px solid var(--olive); }
+    .bn-label { font-size: 0.56rem; font-weight: 600; letter-spacing: 0.02em; }
+    .bn-badge {
+      position: absolute; top: 4px; right: calc(50% - 20px);
+      background: var(--glow-amber); color: #000;
+      font-size: 0.5rem; font-weight: 800; padding: 0.05rem 0.28rem;
+      border-radius: 999px; min-width: 14px; text-align: center;
+    }
   }
 
-  /* Small phone */
   @media (max-width: 480px) {
-    .stats-grid  { grid-template-columns: 1fr; }
-    .glass-number { font-size: 2.2rem; }
-    .glass-hero  { padding: 1.25rem; }
-    .section     { padding: 1.25rem 0.75rem; }
-    .topbar      { padding: 0 1rem; }
+    .kpi-grid { grid-template-columns: 1fr 1fr; }
   }
 </style>
