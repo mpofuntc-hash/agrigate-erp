@@ -2,31 +2,25 @@
   import { onMount, onDestroy, untrack } from "svelte";
   import { PUBLIC_CONVEX_URL } from "$env/static/public";
 
-  // ── Types ─────────────────────────────────────────────────────────────────────
   type Worker   = { _id: string; name: string; saId: string; village: string };
   type YieldLog = { _id: string; workerId: string; binWeight: number; cropType: string; timestamp: number; lat?: number; lng?: number };
 
-  // ── Sidebar nav ───────────────────────────────────────────────────────────────
   let activeSection  = $state("dashboard");
   let sidebarOpen    = $state(false);
 
-  // ── Worker form ───────────────────────────────────────────────────────────────
   let wName = $state(""); let wSaId = $state(""); let wVillage = $state("");
   let saving = $state(false); let saved = $state(false); let regError = $state("");
 
-  // ── Harvest form ──────────────────────────────────────────────────────────────
   let selectedWorker = $state(""); let binWeight = $state("");
   let cropType = $state("Tomatoes");
   let logging = $state(false); let logged = $state(false); let logError = $state("");
   let gpsStatus = $state<"idle"|"capturing"|"ok"|"denied">("idle");
 
-  // ── Data ─────────────────────────────────────────────────────────────────────
   let workers     = $state<Worker[]>([]);
   let todayLogs   = $state<YieldLog[]>([]);
   let dataLoaded  = $state(false);
   let search      = $state("");
 
-  // ── Derived stats ─────────────────────────────────────────────────────────────
   let filtered          = $derived(search.trim() === "" ? workers : workers.filter(w => w.village.toLowerCase().includes(search.trim().toLowerCase())));
   let totalKg           = $derived(todayLogs.reduce((s, l) => s + l.binWeight, 0));
   let totalTonnage      = $derived(totalKg / 1000);
@@ -43,7 +37,6 @@
     return Object.entries(t).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "—";
   })());
 
-  // ── Counting animation for tonnage ────────────────────────────────────────────
   let displayTonnage = $state(0);
   let rafId = 0;
   $effect(() => {
@@ -67,12 +60,10 @@
     return workers.find(w => w._id === id)?.name ?? "Unknown";
   }
 
-  // ── Convex client ─────────────────────────────────────────────────────────────
   let client: import("convex/browser").ConvexClient | null = null;
   let unsubWorkers: (() => void) | undefined;
   let unsubLogs:    (() => void) | undefined;
 
-  // ── Leaflet map ───────────────────────────────────────────────────────────────
   let mapEl: HTMLDivElement | null = null;
   let leafletMap: any = null;
   let markerLayer: any = null;
@@ -126,7 +117,7 @@
         const icon = L.divIcon({
           className: "",
           html: `<div class="map-pin"></div>`,
-          iconSize: [10, 10], iconAnchor: [5, 5],
+          iconSize: [12, 12], iconAnchor: [6, 6],
         });
         L.marker([log.lat, log.lng], { icon })
           .bindPopup(`<b>${workerName(log.workerId)}</b><br>${log.cropType} · ${log.binWeight} kg`)
@@ -212,9 +203,6 @@
   <title>ZZ2 AgriGate — Worker Hub</title>
 </svelte:head>
 
-<!-- Subtle orchard corner photo -->
-<div class="corner-photo" aria-hidden="true"></div>
-
 {#if sidebarOpen}
   <div class="overlay" role="button" tabindex="-1"
        onclick={() => sidebarOpen = false} onkeydown={() => {}}></div>
@@ -225,8 +213,8 @@
   <!-- ══ SIDEBAR ══════════════════════════════════════════════════════════════ -->
   <nav class="sidebar" class:open={sidebarOpen}>
     <div class="sb-brand">
-      <p class="sb-app">AgriGate ERP</p>
-      <p class="sb-farm">ZZ2 Farms</p>
+      <p class="sb-sup">ZZ2 Farm Operations</p>
+      <p class="sb-name">AgriGate ERP</p>
     </div>
 
     <ul class="sb-nav">
@@ -237,7 +225,7 @@
             class:active={activeSection === item.id}
             onclick={() => scrollTo(item.id)}
           >
-            <span class="sb-label">{item.label}</span>
+            <span>{item.label}</span>
             {#if item.id === "dashboard" && totalBins > 0}
               <span class="sb-badge">{totalBins}</span>
             {/if}
@@ -247,11 +235,11 @@
     </ul>
 
     <div class="sb-footer">
-      <div class="sb-sync-row">
+      <div class="sb-sync">
         <span class="glow-dot glow-green"></span>
         <span class="sb-sync-label">Live Sync Active</span>
       </div>
-      <p class="sb-version">v1.0.4-PRO</p>
+      <p class="sb-ver">v1.0.4-PRO</p>
     </div>
   </nav>
 
@@ -260,15 +248,11 @@
 
     <!-- System status bar -->
     <div class="status-bar">
-      <span class="st-item">
-        <span class="glow-dot glow-green"></span>Cloud Sync: Active
-      </span>
+      <span class="st-item"><span class="glow-dot glow-green"></span>Cloud Sync: Active</span>
       <span class="st-sep">·</span>
-      <span class="st-item">
-        <span class="glow-dot glow-green"></span>GPS: Fixed
-      </span>
+      <span class="st-item"><span class="glow-dot glow-green"></span>GPS: Fixed</span>
       <span class="st-sep">·</span>
-      <span class="st-item st-muted">Version 1.0.4-PRO</span>
+      <span class="st-muted">Version 1.0.4-PRO</span>
       <div class="st-right">
         <span class="st-item">{workers.length} registered workers</span>
       </div>
@@ -283,67 +267,74 @@
         <h1>ZZ2 Worker Hub</h1>
         <p class="topbar-date">{new Date().toLocaleDateString("en-ZA", { weekday:"long", day:"numeric", month:"long", year:"numeric" })}</p>
       </div>
+      <div class="topbar-chip">
+        <span class="glow-dot glow-green"></span>
+        {workers.length} workers
+      </div>
     </header>
 
     <!-- ══ OVERVIEW ══════════════════════════════════════════════════════════ -->
     <section class="section" data-s="dashboard">
       <div class="section-inner">
-        <p class="section-eyebrow">Today's Performance</p>
+        <p class="eyebrow">Today's Performance</p>
         <div class="kpi-grid">
-          <div class="kpi-tile">
+
+          <!-- Active Harvest card — citrus bg -->
+          <div class="kpi-tile kpi-harvest">
             <p class="kpi-label">Total Tonnage</p>
             <p class="kpi-value">{displayTonnage.toFixed(3)}<span class="kpi-unit">t</span></p>
+            <p class="kpi-sub">Active harvest</p>
           </div>
+
           <div class="kpi-tile">
             <p class="kpi-label">Bins Logged</p>
             <p class="kpi-value">{totalBins}</p>
+            <p class="kpi-sub">today</p>
           </div>
           <div class="kpi-tile">
             <p class="kpi-label">Active Workers</p>
             <p class="kpi-value">{activeWorkerCount}</p>
+            <p class="kpi-sub">on field</p>
           </div>
           <div class="kpi-tile">
             <p class="kpi-label">Avg Bin Weight</p>
             <p class="kpi-value">{avgBinWeight.toFixed(1)}<span class="kpi-unit">kg</span></p>
+            <p class="kpi-sub">per bin</p>
           </div>
           <div class="kpi-tile">
             <p class="kpi-label">Total Harvested</p>
             <p class="kpi-value">{totalKg.toFixed(0)}<span class="kpi-unit">kg</span></p>
+            <p class="kpi-sub">gross weight</p>
           </div>
           <div class="kpi-tile">
             <p class="kpi-label">Top Village</p>
             <p class="kpi-value kpi-text">{topVillage}</p>
+            <p class="kpi-sub">highest yield</p>
           </div>
         </div>
       </div>
     </section>
 
     <!-- ══ PERSONNEL ══════════════════════════════════════════════════════════ -->
-    <section class="section section-alt" data-s="workers">
+    <section class="section section-tinted" data-s="workers">
       <div class="section-inner">
-        <div class="section-hdr">
-          <h2 class="section-title">Personnel Registry</h2>
-        </div>
+        <h2 class="section-title">Personnel Registry</h2>
         <div class="two-col">
 
-          <!-- Registration form -->
           <div class="panel">
             <div class="panel-hdr">New Registration</div>
             <form onsubmit={registerWorker} class="form">
               <div class="field">
                 <label>Full Name</label>
-                <input type="text" bind:value={wName} placeholder="e.g. Thabo Nkosi"
-                       required disabled={saving} />
+                <input type="text" bind:value={wName} placeholder="e.g. Thabo Nkosi" required disabled={saving} />
               </div>
               <div class="field">
                 <label>SA ID Number</label>
-                <input type="text" bind:value={wSaId} placeholder="13-digit SA ID"
-                       maxlength="13" required disabled={saving} />
+                <input type="text" bind:value={wSaId} placeholder="13-digit SA ID" maxlength="13" required disabled={saving} />
               </div>
               <div class="field">
                 <label>Village / Area</label>
-                <input type="text" bind:value={wVillage} placeholder="e.g. Tzaneen"
-                       required disabled={saving} />
+                <input type="text" bind:value={wVillage} placeholder="e.g. Tzaneen" required disabled={saving} />
               </div>
               <button type="submit" class="btn" disabled={saving}>
                 {#if saving}<span class="spinner"></span>Saving…{:else}Confirm Registration{/if}
@@ -353,15 +344,13 @@
             </form>
           </div>
 
-          <!-- Personnel table -->
           <div class="panel">
             <div class="panel-hdr">
               Registered Personnel
               <div class="search-wrap">
                 <svg class="search-icon" viewBox="0 0 16 16" fill="none"
                      stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                  <circle cx="6.5" cy="6.5" r="4.5"/>
-                  <path d="M11 11l3 3"/>
+                  <circle cx="6.5" cy="6.5" r="4.5"/><path d="M11 11l3 3"/>
                 </svg>
                 <input class="search-input" type="text" bind:value={search}
                        placeholder="Filter by village…" />
@@ -382,12 +371,7 @@
                 <table class="data-table">
                   <thead>
                     <tr>
-                      <th>#</th>
-                      <th>Name</th>
-                      <th>SA ID</th>
-                      <th>Village</th>
-                      <th>Status</th>
-                      <th></th>
+                      <th>#</th><th>Name</th><th>SA ID</th><th>Village</th><th>Status</th><th></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -398,10 +382,7 @@
                         <td class="td-mono">{w.saId}</td>
                         <td>{w.village}</td>
                         <td><span class="glow-dot glow-green" title="Active"></span></td>
-                        <td>
-                          <button class="del-btn" title="Remove worker"
-                                  onclick={() => removeWorker(w._id)}>×</button>
-                        </td>
+                        <td><button class="del-btn" onclick={() => removeWorker(w._id)}>×</button></td>
                       </tr>
                     {/each}
                   </tbody>
@@ -416,12 +397,9 @@
     <!-- ══ HARVEST LOGGER ═════════════════════════════════════════════════════ -->
     <section class="section" data-s="yield">
       <div class="section-inner">
-        <div class="section-hdr">
-          <h2 class="section-title">Harvest Logger</h2>
-        </div>
+        <h2 class="section-title">Harvest Logger</h2>
         <div class="two-col">
 
-          <!-- Log form -->
           <div class="panel">
             <div class="panel-hdr">Log Bin Entry</div>
             <form onsubmit={logBin} class="form">
@@ -466,7 +444,6 @@
             </form>
           </div>
 
-          <!-- Today's bins table -->
           <div class="panel">
             <div class="panel-hdr">Today's Bins ({totalBins})</div>
             {#if todayLogs.length === 0}
@@ -476,13 +453,7 @@
                 <table class="data-table">
                   <thead>
                     <tr>
-                      <th>#</th>
-                      <th>Worker</th>
-                      <th>Crop</th>
-                      <th>kg</th>
-                      <th>Time</th>
-                      <th>GPS</th>
-                      <th></th>
+                      <th>#</th><th>Worker</th><th>Crop</th><th>kg</th><th>Time</th><th>GPS</th><th></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -500,9 +471,7 @@
                             <span class="td-na">—</span>
                           {/if}
                         </td>
-                        <td>
-                          <button class="del-btn" onclick={() => removeLog(log._id)}>×</button>
-                        </td>
+                        <td><button class="del-btn" onclick={() => removeLog(log._id)}>×</button></td>
                       </tr>
                     {/each}
                   </tbody>
@@ -515,15 +484,10 @@
     </section>
 
     <!-- ══ FIELD MAP ══════════════════════════════════════════════════════════ -->
-    <section class="section section-alt" data-s="map">
+    <section class="section section-tinted" data-s="map">
       <div class="section-inner">
-        <div class="section-hdr">
-          <h2 class="section-title">
-            Field Map
-            <span class="tag">Satellite</span>
-          </h2>
-        </div>
-        <p class="section-sub">GPS pins populate automatically when a bin is logged with location data.</p>
+        <h2 class="section-title">Field Map <span class="tag">Satellite</span></h2>
+        <p class="section-sub">GPS pins appear automatically when a bin is logged with location data.</p>
         <div class="map-wrap" bind:this={mapEl}></div>
       </div>
     </section>
@@ -531,10 +495,8 @@
     <!-- ══ REPORTS ════════════════════════════════════════════════════════════ -->
     <section class="section" data-s="reports">
       <div class="section-inner">
-        <div class="section-hdr">
-          <h2 class="section-title">Reports</h2>
-        </div>
-        <div class="kpi-grid kpi-grid--sm">
+        <h2 class="section-title">Reports</h2>
+        <div class="kpi-grid kpi-grid-sm">
           <div class="kpi-tile">
             <p class="kpi-label">Daily Bins</p>
             <p class="kpi-value">{totalBins}</p>
@@ -585,317 +547,303 @@
 </nav>
 
 <style>
-  /* ══ DESIGN TOKENS ═══════════════════════════════════════════════════════════ */
+  /* ══ GLOBAL TOKENS ═══════════════════════════════════════════════════════════ */
   :global(*), :global(*::before), :global(*::after) { box-sizing: border-box; margin: 0; padding: 0; }
   :global(body) {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    background: #1a1f1c;
-    color: #cdd8ce;
-    --bg:           #1a1f1c;
-    --bg-alt:       #1c2220;
-    --bg-panel:     #202621;
-    --bg-elevated:  #252d26;
-    --border:       rgba(255,255,255,0.07);
-    --border-mid:   rgba(255,255,255,0.11);
-    --text-1:       #dce8dd;
-    --text-2:       #7a8f7d;
-    --text-3:       #445447;
-    --olive:        #4a7c59;
-    --olive-dark:   #2a3d30;
-    --olive-light:  #5c9470;
-    --glow-green:   #22c55e;
-    --glow-amber:   #f59e0b;
-    --r-sm:         3px;
-    --r-md:         6px;
-    --shadow:       0 1px 6px rgba(0,0,0,0.35);
-  }
-
-  /* ══ CORNER ORCHARD PHOTO ════════════════════════════════════════════════════ */
-  .corner-photo {
-    position: fixed;
-    bottom: 0; right: 0;
-    width: 42vw; height: 52vh;
-    background-image: url('/waqar-mujahid-NU_s4KI_zME-unsplash.jpg');
-    background-size: cover;
-    background-position: center;
-    opacity: 0.07;
-    pointer-events: none;
-    z-index: 0;
-    mask-image: linear-gradient(to top left, rgba(0,0,0,0.7) 0%, transparent 65%);
-    -webkit-mask-image: linear-gradient(to top left, rgba(0,0,0,0.7) 0%, transparent 65%);
+    color: #111827;
   }
 
   /* ══ SHELL ═══════════════════════════════════════════════════════════════════ */
-  .shell { display: flex; min-height: 100vh; position: relative; z-index: 1; }
+  .shell { display: flex; min-height: 100vh; }
 
   /* ══ SIDEBAR ═════════════════════════════════════════════════════════════════ */
   .sidebar {
     width: 216px; min-height: 100vh;
-    background: #111613;
-    border-right: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-right: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 2px 0 24px rgba(0, 0, 0, 0.06);
     display: flex; flex-direction: column;
     position: sticky; top: 0; height: 100vh;
     overflow-y: auto; flex-shrink: 0; z-index: 100;
     transition: transform 0.25s ease;
   }
   .sb-brand {
-    padding: 1.2rem 1rem 0.9rem;
-    border-bottom: 1px solid var(--border);
+    padding: 1.25rem 1.1rem 1rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   }
-  .sb-app  { font-size: 0.58rem; color: var(--olive-light); letter-spacing: 0.18em; text-transform: uppercase; font-weight: 700; margin-bottom: 0.2rem; }
-  .sb-farm { font-size: 0.95rem; font-weight: 800; color: var(--text-1); letter-spacing: -0.01em; }
+  .sb-sup  { font-size: 0.58rem; font-weight: 700; color: #9ca3af; letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 0.2rem; }
+  .sb-name { font-size: 1rem; font-weight: 800; color: #064e3b; letter-spacing: -0.01em; }
 
-  .sb-nav { list-style: none; padding: 0.65rem 0.5rem; flex: 1; display: flex; flex-direction: column; gap: 0.1rem; }
+  .sb-nav { list-style: none; padding: 0.6rem 0.5rem; flex: 1; display: flex; flex-direction: column; gap: 0.1rem; }
   .sb-item {
     width: 100%; display: flex; align-items: center; justify-content: space-between;
-    padding: 0.5rem 0.8rem; border-radius: var(--r-sm);
-    background: none; border: none; color: var(--text-2);
-    font-family: 'Inter', sans-serif; font-size: 0.78rem; font-weight: 500;
-    cursor: pointer; text-align: left; letter-spacing: 0.01em;
+    padding: 0.52rem 0.85rem; border-radius: 6px;
+    background: none; border: none; color: #4b5563;
+    font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 500;
+    cursor: pointer; text-align: left;
     transition: background 0.12s, color 0.12s;
   }
-  .sb-item:hover  { background: rgba(255,255,255,0.04); color: var(--text-1); }
+  .sb-item:hover  { background: rgba(6, 95, 70, 0.06); color: #064e3b; }
   .sb-item.active {
-    background: var(--olive-dark); color: var(--text-1); font-weight: 600;
-    border-left: 2px solid var(--olive); padding-left: calc(0.8rem - 2px);
+    background: #065f46; color: #fff; font-weight: 600;
+    box-shadow: 0 2px 10px rgba(6, 95, 70, 0.25);
   }
-  .sb-label { flex: 1; }
   .sb-badge {
-    background: var(--glow-amber); color: #000;
+    background: #d97706; color: #fff;
     font-size: 0.56rem; font-weight: 800;
     padding: 0.05rem 0.38rem; border-radius: 999px; min-width: 16px; text-align: center;
   }
-  .sb-footer { padding: 0.8rem 1rem; border-top: 1px solid var(--border); }
-  .sb-sync-row { display: flex; align-items: center; gap: 0.45rem; margin-bottom: 0.2rem; }
-  .sb-sync-label { font-size: 0.65rem; color: var(--text-2); }
-  .sb-version    { font-size: 0.6rem; color: var(--text-3); }
+  .sb-footer { padding: 0.8rem 1rem; border-top: 1px solid rgba(0, 0, 0, 0.06); }
+  .sb-sync { display: flex; align-items: center; gap: 0.45rem; margin-bottom: 0.2rem; }
+  .sb-sync-label { font-size: 0.65rem; color: #6b7280; }
+  .sb-ver { font-size: 0.6rem; color: #d1d5db; }
 
   /* ══ GLOW DOTS ═══════════════════════════════════════════════════════════════ */
   .glow-dot {
     display: inline-block; flex-shrink: 0;
     width: 8px; height: 8px; border-radius: 50%;
   }
-  .glow-green { background: var(--glow-green); box-shadow: 0 0 10px var(--glow-green); }
-  .glow-amber { background: var(--glow-amber); box-shadow: 0 0 10px var(--glow-amber); }
+  /* Richer glow on light backgrounds */
+  .glow-green { background: #16a34a; box-shadow: 0 0 8px #16a34a, 0 0 18px rgba(22,163,74,0.5); }
+  .glow-amber { background: #d97706; box-shadow: 0 0 8px #d97706, 0 0 18px rgba(217,119,6,0.5); }
 
   /* ══ MAIN ════════════════════════════════════════════════════════════════════ */
   .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 
-  /* System status bar */
+  /* Status bar */
   .status-bar {
-    background: #0f1410;
-    border-bottom: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     height: 28px; padding: 0 1.5rem;
     display: flex; align-items: center; gap: 0.8rem;
-    font-size: 0.65rem; color: var(--text-2); letter-spacing: 0.02em;
-    position: sticky; top: 0; z-index: 60;
-    flex-shrink: 0;
+    font-size: 0.65rem; color: #6b7280; letter-spacing: 0.02em;
+    position: sticky; top: 0; z-index: 60; flex-shrink: 0;
   }
   .st-item  { display: flex; align-items: center; gap: 0.38rem; }
-  .st-sep   { color: var(--text-3); }
-  .st-muted { color: var(--text-3); }
+  .st-sep   { color: #d1d5db; }
+  .st-muted { color: #d1d5db; }
   .st-right { margin-left: auto; }
 
   /* Top bar */
   .topbar {
-    background: var(--bg-alt);
-    border-bottom: 1px solid var(--border);
-    padding: 0 1.5rem; height: 50px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+    padding: 0 1.5rem; height: 52px;
     display: flex; align-items: center; gap: 1rem;
     position: sticky; top: 28px; z-index: 50; flex-shrink: 0;
+    box-shadow: 0 1px 8px rgba(0, 0, 0, 0.04);
   }
   .hamburger {
     display: none; flex-direction: column; gap: 4px;
     background: none; border: none; cursor: pointer; padding: 4px;
   }
-  .hamburger span { display: block; width: 18px; height: 1.5px; background: var(--text-2); border-radius: 1px; }
+  .hamburger span { display: block; width: 18px; height: 1.5px; background: #6b7280; border-radius: 1px; }
   .topbar-brand { flex: 1; }
-  .topbar-brand h1 { font-size: 0.88rem; font-weight: 700; color: var(--text-1); letter-spacing: 0.01em; }
-  .topbar-date    { font-size: 0.62rem; color: var(--text-3); margin-top: 0.1rem; }
+  .topbar-brand h1 { font-size: 0.9rem; font-weight: 700; color: #064e3b; }
+  .topbar-date    { font-size: 0.62rem; color: #9ca3af; margin-top: 0.1rem; }
+  .topbar-chip {
+    display: flex; align-items: center; gap: 0.38rem;
+    font-size: 0.7rem; font-weight: 600; color: #065f46;
+    background: rgba(6, 95, 70, 0.08); border: 1px solid rgba(6, 95, 70, 0.2);
+    padding: 0.22rem 0.7rem; border-radius: 999px;
+  }
 
   /* ══ SECTIONS ════════════════════════════════════════════════════════════════ */
-  .section     { padding: 1.75rem 1.5rem; background: var(--bg); }
-  .section-alt { background: var(--bg-alt); }
-  .section-inner { max-width: 1200px; margin: 0 auto; }
-  .section-hdr {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 1.1rem;
-  }
-  .section-eyebrow {
-    font-size: 0.6rem; font-weight: 700; color: var(--text-3);
-    text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 0.6rem;
-  }
-  .section-title { font-size: 0.95rem; font-weight: 700; color: var(--text-1); display: flex; align-items: center; gap: 0.6rem; }
-  .section-sub   { font-size: 0.75rem; color: var(--text-2); margin-bottom: 0.85rem; margin-top: -0.6rem; }
+  .section        { padding: 1.75rem 1.5rem; }
+  .section-tinted { background: rgba(255, 255, 255, 0.25); }
+  .section-inner  { max-width: 1200px; margin: 0 auto; }
+  .eyebrow { font-size: 0.6rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 0.7rem; }
+  .section-title  { font-size: 1rem; font-weight: 700; color: #064e3b; margin-bottom: 1.1rem; display: flex; align-items: center; gap: 0.6rem; }
+  .section-sub    { font-size: 0.75rem; color: #6b7280; margin-bottom: 0.85rem; margin-top: -0.6rem; }
   .tag {
-    font-size: 0.56rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-    padding: 0.12rem 0.45rem; border-radius: var(--r-sm);
-    background: rgba(74,124,89,0.18); color: var(--olive-light);
-    border: 1px solid rgba(74,124,89,0.35);
+    font-size: 0.56rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+    padding: 0.12rem 0.45rem; border-radius: 4px;
+    background: rgba(6, 95, 70, 0.1); color: #065f46;
+    border: 1px solid rgba(6, 95, 70, 0.25);
   }
 
   /* ══ KPI GRID ════════════════════════════════════════════════════════════════ */
   .kpi-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 1px; background: var(--border-mid);
-    border: 1px solid var(--border-mid); border-radius: var(--r-md);
-    overflow: hidden;
+    grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+    gap: 1px; background: rgba(0, 0, 0, 0.07);
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    border-radius: 12px; overflow: hidden;
+    margin-bottom: 1.5rem;
   }
-  .kpi-grid--sm { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+  .kpi-grid-sm { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+
   .kpi-tile {
-    background: var(--bg-panel); padding: 1rem 1.1rem;
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 1.1rem 1.2rem;
     transition: background 0.12s;
   }
-  .kpi-tile:hover { background: var(--bg-elevated); }
-  .kpi-label { font-size: 0.6rem; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.45rem; }
-  .kpi-value { font-size: 1.7rem; font-weight: 800; color: var(--text-1); line-height: 1; letter-spacing: -0.03em; }
-  .kpi-unit  { font-size: 0.78rem; font-weight: 400; color: var(--text-2); margin-left: 0.15rem; }
-  .kpi-text  { font-size: 1rem; }
+  .kpi-tile:hover { background: rgba(255, 255, 255, 0.88); }
+
+  /* Active Harvest tile — citrus background */
+  .kpi-harvest {
+    position: relative;
+    background-image: url('/luis-guaman-6mtp5h4dG-A-unsplash.jpg');
+    background-size: cover; background-position: center;
+  }
+  .kpi-harvest::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(2px);
+  }
+  .kpi-harvest > * { position: relative; z-index: 1; }
+
+  .kpi-label { font-size: 0.58rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.45rem; }
+  /* Slab serif for heavy, industrial tonnage numbers */
+  .kpi-value { font-family: 'Roboto Slab', serif; font-size: 2rem; font-weight: 800; color: #064e3b; line-height: 1; letter-spacing: -0.03em; }
+  .kpi-unit  { font-family: 'Inter', sans-serif; font-size: 0.82rem; font-weight: 400; color: #6b7280; margin-left: 0.15rem; }
+  .kpi-text  { font-size: 1.1rem; }
+  .kpi-sub   { font-size: 0.62rem; color: #9ca3af; margin-top: 0.3rem; }
 
   /* ══ TWO-COL ═════════════════════════════════════════════════════════════════ */
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 
-  /* ══ PANELS ══════════════════════════════════════════════════════════════════ */
+  /* ══ PANELS — frosted glass ══════════════════════════════════════════════════ */
   .panel {
-    background: var(--bg-panel);
-    border: 1px solid var(--border);
-    border-radius: var(--r-md);
-    overflow: hidden;
-    box-shadow: var(--shadow);
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    border-radius: 10px; overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
   }
   .panel-hdr {
-    padding: 0.55rem 0.9rem;
-    background: var(--bg-elevated);
-    border-bottom: 1px solid var(--border);
-    font-size: 0.65rem; font-weight: 700;
-    color: var(--text-2); text-transform: uppercase; letter-spacing: 0.1em;
-    display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
-    flex-wrap: wrap;
+    padding: 0.6rem 0.95rem;
+    background: rgba(255, 255, 255, 0.88);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    font-size: 0.65rem; font-weight: 700; color: #065f46;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;
   }
 
-  /* ══ HIGH-DENSITY DATA TABLES ════════════════════════════════════════════════ */
+  /* ══ HIGH-DENSITY TABLES ═════════════════════════════════════════════════════ */
   .table-scroll { overflow-y: auto; max-height: 340px; }
-  .data-table   { width: 100%; border-collapse: collapse; font-size: 0.75rem; color: var(--text-1); }
-  .data-table thead tr  { border-bottom: 1px solid var(--border-mid); }
+  .data-table   { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+  .data-table thead tr  { border-bottom: 1px solid rgba(0, 0, 0, 0.08); }
   .data-table th {
-    padding: 0.38rem 0.7rem;
-    font-size: 0.58rem; font-weight: 700; color: var(--text-3);
+    padding: 0.4rem 0.75rem;
+    font-size: 0.58rem; font-weight: 700; color: #065f46;
     text-transform: uppercase; letter-spacing: 0.1em; text-align: left;
-    background: var(--bg-elevated); position: sticky; top: 0; z-index: 2;
+    background: rgba(6, 95, 70, 0.05);
+    position: sticky; top: 0; z-index: 2;
   }
-  .data-table td { padding: 0.34rem 0.7rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
-  .tr:hover td  { background: rgba(255,255,255,0.02); }
+  .data-table td { padding: 0.36rem 0.75rem; border-bottom: 1px solid rgba(0,0,0,0.05); vertical-align: middle; color: #374151; }
+  .tr:hover td  { background: rgba(6, 95, 70, 0.03); }
   .tr:last-child td { border-bottom: none; }
-  .td-n      { color: var(--text-3); font-size: 0.62rem; width: 26px; }
-  .td-name   { font-weight: 600; }
-  .td-mono   { font-family: 'Courier New', monospace; font-size: 0.7rem; color: var(--text-2); letter-spacing: 0.04em; }
-  .td-weight { font-weight: 700; color: var(--olive-light); }
-  .td-na     { color: var(--text-3); }
+  .td-n      { color: #d1d5db; font-size: 0.62rem; width: 26px; }
+  .td-name   { font-weight: 600; color: #064e3b; }
+  .td-mono   { font-family: 'Courier New', monospace; font-size: 0.7rem; color: #6b7280; letter-spacing: 0.04em; }
+  .td-weight { font-weight: 700; color: #065f46; }
+  .td-na     { color: #d1d5db; }
 
   /* ══ FORM ════════════════════════════════════════════════════════════════════ */
-  .form  { padding: 0.9rem; display: flex; flex-direction: column; gap: 0.65rem; }
-  .field { display: flex; flex-direction: column; gap: 0.28rem; }
+  .form  { padding: 0.95rem; display: flex; flex-direction: column; gap: 0.7rem; }
+  .field { display: flex; flex-direction: column; gap: 0.3rem; }
   .field label {
-    font-size: 0.6rem; font-weight: 700; color: var(--text-3);
+    font-size: 0.6rem; font-weight: 700; color: #9ca3af;
     text-transform: uppercase; letter-spacing: 0.1em;
   }
   .field input, .field select {
-    padding: 0.5rem 0.7rem;
-    background: var(--bg); border: 1px solid var(--border-mid); border-radius: var(--r-sm);
-    font-family: 'Inter', sans-serif; font-size: 0.8rem; color: var(--text-1); width: 100%;
-    transition: border-color 0.12s;
+    padding: 0.52rem 0.75rem;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 6px;
+    font-family: 'Inter', sans-serif; font-size: 0.82rem; color: #111827; width: 100%;
+    transition: border-color 0.12s, box-shadow 0.12s;
   }
   .field input:focus, .field select:focus {
-    outline: none; border-color: var(--olive);
-    box-shadow: 0 0 0 2px rgba(74,124,89,0.15);
+    outline: none; border-color: #065f46;
+    box-shadow: 0 0 0 3px rgba(6, 95, 70, 0.1);
   }
   .field input:disabled, .field select:disabled { opacity: 0.4; }
-  .field select option { background: var(--bg-panel); }
 
-  /* ══ BUTTONS — Muted Olive with 2px border ═══════════════════════════════════ */
+  /* ══ BUTTONS ═════════════════════════════════════════════════════════════════ */
   .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
-    padding: 0.55rem 1rem; width: 100%; margin-top: 0.2rem;
-    background: var(--olive-dark); color: #bfd4bf;
-    border: 2px solid var(--olive); border-radius: var(--r-sm);
-    font-family: 'Inter', sans-serif; font-size: 0.78rem; font-weight: 600;
-    cursor: pointer; letter-spacing: 0.03em;
-    transition: background 0.12s, border-color 0.12s, color 0.12s;
+    padding: 0.6rem 1rem; width: 100%; margin-top: 0.2rem;
+    background: #065f46; color: #fff; border: none; border-radius: 6px;
+    font-family: 'Inter', sans-serif; font-size: 0.82rem; font-weight: 600;
+    cursor: pointer; letter-spacing: 0.02em;
+    box-shadow: 0 2px 10px rgba(6, 95, 70, 0.2);
+    transition: background 0.12s, transform 0.12s, box-shadow 0.12s;
   }
-  .btn:hover:not(:disabled)  { background: #334a38; border-color: var(--olive-light); color: #d5e8d5; }
-  .btn:active:not(:disabled) { background: #243329; }
-  .btn:disabled { opacity: 0.38; cursor: not-allowed; }
+  .btn:hover:not(:disabled)  { background: #047857; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(6,95,70,0.3); }
+  .btn:active:not(:disabled) { transform: none; }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
   .btn-export {
-    width: auto; background: transparent;
-    color: var(--text-2); border-color: var(--border-mid);
+    width: auto; background: rgba(255,255,255,0.8);
+    color: #374151; border: 1px solid rgba(0,0,0,0.12);
+    box-shadow: none;
   }
-  .btn-export:hover { border-color: var(--olive); color: var(--text-1); background: var(--olive-dark); }
+  .btn-export:hover { background: rgba(6,95,70,0.08); border-color: #065f46; color: #064e3b; transform: none; box-shadow: none; }
   .btn-icon { width: 13px; height: 13px; }
 
   .del-btn {
-    background: none; border: 1px solid rgba(220,80,80,0.25); border-radius: var(--r-sm);
-    color: #c47070; font-size: 0.82rem; font-weight: 700;
+    background: none; border: 1px solid rgba(220,38,38,0.2); border-radius: 4px;
+    color: #dc2626; font-size: 0.82rem; font-weight: 700;
     cursor: pointer; padding: 0.08rem 0.32rem; line-height: 1;
     transition: background 0.12s;
   }
-  .del-btn:hover { background: rgba(220,80,80,0.1); color: #e08080; }
+  .del-btn:hover { background: rgba(220,38,38,0.06); }
 
   /* ══ ALERTS ══════════════════════════════════════════════════════════════════ */
-  .alert { padding: 0.45rem 0.7rem; border-radius: var(--r-sm); font-size: 0.72rem; font-weight: 600; }
-  .alert-ok  { background: rgba(34,197,94,0.07);  color: #4ade80; border: 1px solid rgba(34,197,94,0.18); }
-  .alert-err { background: rgba(220,80,80,0.07);  color: #f08080; border: 1px solid rgba(220,80,80,0.18); }
+  .alert { padding: 0.48rem 0.75rem; border-radius: 6px; font-size: 0.72rem; font-weight: 600; }
+  .alert-ok  { background: rgba(22,163,74,0.08);  color: #14532d; border: 1px solid rgba(22,163,74,0.2); }
+  .alert-err { background: rgba(220,38,38,0.07);  color: #7f1d1d; border: 1px solid rgba(220,38,38,0.15); }
 
   /* ══ GPS ═════════════════════════════════════════════════════════════════════ */
-  .gps-row { display: flex; align-items: center; }
-  .gps-tag { font-size: 0.68rem; padding: 0.22rem 0.55rem; border-radius: var(--r-sm); background: var(--bg); color: var(--text-3); border: 1px solid var(--border); }
-  .gps-ok   { color: #4ade80; border-color: rgba(34,197,94,0.25); }
-  .gps-wait { color: var(--glow-amber); border-color: rgba(245,158,11,0.25); }
-  .gps-na   { color: #f08080; border-color: rgba(220,80,80,0.25); }
+  .gps-row  { display: flex; align-items: center; }
+  .gps-tag  { font-size: 0.68rem; padding: 0.22rem 0.55rem; border-radius: 4px; background: rgba(255,255,255,0.7); color: #6b7280; border: 1px solid rgba(0,0,0,0.1); }
+  .gps-ok   { color: #14532d; border-color: rgba(22,163,74,0.25); }
+  .gps-wait { color: #92400e; border-color: rgba(217,119,6,0.25); }
+  .gps-na   { color: #7f1d1d; border-color: rgba(220,38,38,0.2); }
 
   /* ══ SEARCH ══════════════════════════════════════════════════════════════════ */
   .search-wrap {
     display: flex; align-items: center; gap: 0.38rem;
-    background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-sm);
-    padding: 0.28rem 0.55rem; transition: border-color 0.12s; flex: 1; max-width: 200px;
+    background: rgba(255,255,255,0.85); border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 6px; padding: 0.28rem 0.55rem;
+    transition: border-color 0.12s; flex: 1; max-width: 200px;
   }
-  .search-wrap:focus-within { border-color: var(--olive); }
-  .search-icon  { width: 11px; height: 11px; color: var(--text-3); flex-shrink: 0; }
-  .search-input { flex: 1; border: none; background: transparent; font-family: 'Inter', sans-serif; font-size: 0.72rem; color: var(--text-1); outline: none; }
-  .search-input::placeholder { color: var(--text-3); }
-  .clear-btn    { background: none; border: none; color: var(--text-3); cursor: pointer; font-size: 0.72rem; line-height: 1; }
-  .clear-btn:hover { color: var(--text-1); }
+  .search-wrap:focus-within { border-color: #065f46; }
+  .search-icon  { width: 11px; height: 11px; color: #9ca3af; flex-shrink: 0; }
+  .search-input { flex: 1; border: none; background: transparent; font-family: 'Inter', sans-serif; font-size: 0.72rem; color: #111827; outline: none; }
+  .search-input::placeholder { color: #d1d5db; }
+  .clear-btn    { background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 0.72rem; line-height: 1; }
+  .clear-btn:hover { color: #374151; }
 
-  /* ══ EMPTY / LOADING ═════════════════════════════════════════════════════════ */
+  /* ══ STATES ══════════════════════════════════════════════════════════════════ */
   .empty-state { padding: 1.75rem 1rem; text-align: center; }
-  .empty-state p { font-size: 0.75rem; color: var(--text-3); }
+  .empty-state p { font-size: 0.75rem; color: #9ca3af; }
 
   /* ══ MAP ═════════════════════════════════════════════════════════════════════ */
-  .map-wrap { height: 420px; border-radius: var(--r-md); overflow: hidden; border: 1px solid var(--border); }
-  :global(.map-pin) {
-    width: 10px; height: 10px; border-radius: 50%;
-    background: var(--glow-green); box-shadow: 0 0 8px var(--glow-green);
-  }
+  .map-wrap { height: 420px; border-radius: 10px; overflow: hidden; border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+  :global(.map-pin) { width: 12px; height: 12px; border-radius: 50%; background: #16a34a; box-shadow: 0 0 8px #16a34a, 0 0 16px rgba(22,163,74,0.4); }
 
-  /* ══ EXPORT ROW ══════════════════════════════════════════════════════════════ */
-  .export-row {
-    display: flex; align-items: center; justify-content: space-between;
-    flex-wrap: wrap; gap: 1rem;
-    padding-top: 1.1rem; margin-top: 1.1rem;
-    border-top: 1px solid var(--border);
-  }
-  .export-note { font-size: 0.72rem; color: var(--text-2); }
+  /* ══ EXPORT ══════════════════════════════════════════════════════════════════ */
+  .export-row  { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; padding-top: 1.1rem; margin-top: 1.1rem; border-top: 1px solid rgba(0,0,0,0.07); }
+  .export-note { font-size: 0.72rem; color: #6b7280; }
 
   /* ══ OVERLAY ═════════════════════════════════════════════════════════════════ */
-  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 90; }
+  .overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.3); backdrop-filter: blur(4px); z-index: 90; }
 
   /* ══ SPINNER ═════════════════════════════════════════════════════════════════ */
-  .spinner {
-    width: 11px; height: 11px; border-radius: 50%;
-    border: 1.5px solid rgba(200,220,200,0.25); border-top-color: #bfd4bf;
-    animation: spin 0.7s linear infinite; flex-shrink: 0;
-  }
+  .spinner { width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.3); border-top-color: #fff; animation: spin 0.7s linear infinite; flex-shrink: 0; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
   /* ══ MOBILE BOTTOM NAV ═══════════════════════════════════════════════════════ */
@@ -903,44 +851,44 @@
 
   /* ══ RESPONSIVE ══════════════════════════════════════════════════════════════ */
   @media (max-width: 1024px) {
-    .two-col { grid-template-columns: 1fr; }
+    .two-col  { grid-template-columns: 1fr; }
     .kpi-grid { grid-template-columns: repeat(3,1fr); }
   }
-
   @media (max-width: 768px) {
     .sidebar { position: fixed; top: 0; left: 0; height: 100vh; transform: translateX(-100%); z-index: 95; }
-    .sidebar.open { transform: translateX(0); box-shadow: 4px 0 20px rgba(0,0,0,0.5); }
+    .sidebar.open { transform: translateX(0); box-shadow: 4px 0 24px rgba(0,0,0,0.15); }
     .hamburger { display: flex; }
-    .main      { padding-bottom: 56px; }
+    .main      { padding-bottom: 60px; }
     .section   { padding: 1.25rem 1rem; }
     .map-wrap  { height: 300px; }
-    .status-bar { padding: 0 1rem; gap: 0.6rem; font-size: 0.6rem; }
+    .status-bar { padding: 0 1rem; font-size: 0.6rem; }
     .topbar    { top: 28px; padding: 0 1rem; }
     .kpi-grid  { grid-template-columns: repeat(2,1fr); }
 
     .bottom-nav {
       display: flex; position: fixed; bottom: 0; left: 0; right: 0;
-      background: #0f1410; border-top: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border-top: 1px solid rgba(0, 0, 0, 0.07);
       z-index: 200; padding-bottom: env(safe-area-inset-bottom, 0px);
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
     }
     .bn-item {
       flex: 1; display: flex; flex-direction: column; align-items: center;
       gap: 0.15rem; padding: 0.65rem 0.25rem; position: relative;
       background: none; border: none; cursor: pointer;
-      color: var(--text-3); font-family: 'Inter', sans-serif;
-      transition: color 0.12s;
+      color: #9ca3af; font-family: 'Inter', sans-serif; transition: color 0.12s;
     }
-    .bn-item:hover  { color: var(--text-2); }
-    .bn-item.active { color: var(--text-1); border-top: 2px solid var(--olive); }
-    .bn-label { font-size: 0.56rem; font-weight: 600; letter-spacing: 0.02em; }
+    .bn-item:hover  { color: #374151; }
+    .bn-item.active { color: #064e3b; border-top: 2px solid #065f46; }
+    .bn-label { font-size: 0.58rem; font-weight: 600; letter-spacing: 0.02em; }
     .bn-badge {
       position: absolute; top: 4px; right: calc(50% - 20px);
-      background: var(--glow-amber); color: #000;
+      background: #d97706; color: #fff;
       font-size: 0.5rem; font-weight: 800; padding: 0.05rem 0.28rem;
       border-radius: 999px; min-width: 14px; text-align: center;
     }
   }
-
   @media (max-width: 480px) {
     .kpi-grid { grid-template-columns: 1fr 1fr; }
   }

@@ -6,11 +6,11 @@
   let { children } = $props();
 
   const bottomNav = [
-    { href: "/dashboard",              prefix: "/dashboard",        icon: "📊", label: "Dashboard" },
-    { href: "/farm-management/fields", prefix: "/farm-management",  icon: "🌾", label: "Farm"      },
-    { href: "/inventory/products",     prefix: "/inventory",        icon: "📦", label: "Inventory" },
-    { href: "/hr/employees",           prefix: "/hr",               icon: "👷", label: "HR"        },
-    { href: "/settings",               prefix: "/settings",         icon: "⚙️",  label: "Settings"  },
+    { href: "/dashboard",              prefix: "/dashboard",       icon: "📊", label: "Dashboard" },
+    { href: "/farm-management/fields", prefix: "/farm-management", icon: "🌾", label: "Farm"      },
+    { href: "/inventory/products",     prefix: "/inventory",       icon: "📦", label: "Inventory" },
+    { href: "/hr/employees",           prefix: "/hr",              icon: "👷", label: "HR"        },
+    { href: "/settings",               prefix: "/settings",        icon: "⚙️",  label: "Settings"  },
   ];
 </script>
 
@@ -39,19 +39,10 @@
 </nav>
 
 <style>
-  :global(*, *::before, *::after) { box-sizing: border-box; }
-  :global(body) {
-    margin: 0;
-    font-family: 'Inter', system-ui, sans-serif;
-    background: #f5f5f5;
-  }
-
-  /* ── Desktop shell ──────────────────────────────────────────────────────── */
   .app-shell {
     display: flex;
     min-height: 100vh;
   }
-
   .main-area {
     flex: 1;
     display: flex;
@@ -59,46 +50,39 @@
     overflow: hidden;
     min-width: 0;
   }
-
   .content {
     flex: 1;
     padding: 1.5rem;
     overflow-y: auto;
   }
 
-  /* ── Bottom nav – hidden on desktop ────────────────────────────────────── */
   .bottom-nav { display: none; }
 
-  /* ── Mobile layout ──────────────────────────────────────────────────────── */
   @media (max-width: 768px) {
-    /* Hide desktop sidebar */
     :global(.sidebar) { display: none !important; }
-
-    /* Push content above the bottom nav */
     .content { padding: 1rem 1rem calc(1rem + 60px); }
 
-    /* Bottom nav bar */
     .bottom-nav {
       display: flex;
       position: fixed; bottom: 0; left: 0; right: 0;
-      background: #1a2e1a;
-      border-top: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-top: 1px solid rgba(0, 0, 0, 0.07);
       z-index: 200;
       padding-bottom: env(safe-area-inset-bottom, 0px);
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
     }
-
     .bn-item {
-      flex: 1;
-      display: flex; flex-direction: column; align-items: center;
+      flex: 1; display: flex; flex-direction: column; align-items: center;
       gap: 0.2rem; padding: 0.6rem 0.25rem;
-      color: #7cb87e; text-decoration: none;
+      color: #9ca3af; text-decoration: none;
       font-family: 'Inter', sans-serif;
-      transition: background 0.15s, color 0.15s;
+      transition: color 0.12s;
     }
-    .bn-item:hover   { background: rgba(255,255,255,0.06); color: #fff; }
-    .bn-item.active  { color: #fff; background: rgba(46,125,50,0.35); }
-
-    .bn-icon  { font-size: 1.15rem; line-height: 1; }
-    .bn-label { font-size: 0.58rem; font-weight: 600; letter-spacing: 0.02em; }
+    .bn-item:hover  { color: #374151; }
+    .bn-item.active { color: #064e3b; border-top: 2px solid #065f46; }
+    .bn-icon  { font-size: 1.1rem; line-height: 1; }
+    .bn-label { font-size: 0.6rem; font-weight: 600; }
   }
 </style>

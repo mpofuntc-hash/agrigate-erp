@@ -5,11 +5,33 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
-		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Roboto+Slab:wght@600;700;800;900&display=swap" rel="stylesheet" />
 		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 		%sveltekit.head%
+		<style>
+			*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+			html { min-height: 100%; }
+			body {
+				font-family: 'Inter', system-ui, -apple-system, sans-serif;
+				min-height: 100vh;
+				/* North West morning sky gradient */
+				background: linear-gradient(to bottom, #f0f9ff, #fdfdf7);
+			}
+			/* Fixed orchard breathing through the app at 15% opacity */
+			body::before {
+				content: '';
+				position: fixed;
+				inset: 0;
+				z-index: 0;
+				background: url('/liana-mikah-PyJCcS09RTg-unsplash.jpg') center / cover no-repeat;
+				opacity: 0.15;
+				pointer-events: none;
+			}
+			/* All app content sits above the background */
+			body > div { position: relative; z-index: 1; }
+		</style>
 	</head>
 	<body data-sveltekit-preload-data="hover">
-		<div style="display: contents">%sveltekit.body%</div>
+		<div>%sveltekit.body%</div>
 	</body>
 </html>

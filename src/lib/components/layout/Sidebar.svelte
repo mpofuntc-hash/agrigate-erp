@@ -65,16 +65,13 @@
   ];
 
   let expanded: Record<string, boolean> = {};
-
-  function toggle(label: string) {
-    expanded[label] = !expanded[label];
-  }
+  function toggle(label: string) { expanded[label] = !expanded[label]; }
 </script>
 
 <aside class="sidebar">
   <div class="sidebar-header">
-    <span class="logo">ZZ2 ERP</span>
-    <small class="subtitle">AgriGate</small>
+    <p class="sidebar-sup">ZZ2 Farm Operations</p>
+    <span class="logo">AgriGate ERP</span>
   </div>
 
   <nav>
@@ -82,7 +79,6 @@
       {#if item.children}
         <div class="nav-group">
           <button class="nav-item group-toggle" onclick={() => toggle(item.label)}>
-            <span class="icon">{item.icon}</span>
             <span>{item.label}</span>
             <span class="chevron">{expanded[item.label] ? "▾" : "▸"}</span>
           </button>
@@ -96,7 +92,6 @@
         </div>
       {:else}
         <a class="nav-item" href={item.href}>
-          <span class="icon">{item.icon}</span>
           <span>{item.label}</span>
         </a>
       {/if}
@@ -108,67 +103,48 @@
   .sidebar {
     width: 240px;
     height: 100vh;
-    background: #1a2e1a;
-    color: #e8f5e9;
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-right: 1px solid rgba(255, 255, 255, 0.55);
+    box-shadow: 2px 0 24px rgba(0, 0, 0, 0.06);
     display: flex;
     flex-direction: column;
     padding: 0 0 1rem 0;
-    /* Sticky on desktop */
     position: sticky;
     top: 0;
     flex-shrink: 0;
     overflow-y: auto;
   }
   .sidebar-header {
-    padding: 1.5rem 1rem 1rem;
-    border-bottom: 1px solid #2e5c2e;
+    padding: 1.4rem 1.1rem 1rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     display: flex;
     flex-direction: column;
   }
-  .logo {
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: #81c784;
+  .sidebar-sup {
+    font-size: 0.58rem; font-weight: 700; color: #6b7280;
+    letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 0.25rem;
   }
-  .subtitle {
-    font-size: 0.75rem;
-    color: #a5d6a7;
-  }
+  .logo { font-size: 1.1rem; font-weight: 800; color: #064e3b; letter-spacing: -0.01em; }
+
   .nav-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.6rem 1rem;
-    color: #c8e6c9;
-    text-decoration: none;
-    font-size: 0.9rem;
-    cursor: pointer;
-    background: none;
-    border: none;
-    width: 100%;
-    text-align: left;
-    transition: background 0.15s;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.55rem 1.1rem;
+    color: #374151; text-decoration: none;
+    font-size: 0.82rem; font-weight: 500;
+    cursor: pointer; background: none; border: none;
+    width: 100%; text-align: left;
+    transition: background 0.12s, color 0.12s;
   }
-  .nav-item:hover {
-    background: #2e5c2e;
-    color: #fff;
-  }
-  .group-toggle {
-    justify-content: space-between;
-  }
-  .nav-children {
-    padding-left: 1.5rem;
-  }
+  .nav-item:hover { background: rgba(6, 95, 70, 0.06); color: #064e3b; }
+  .group-toggle { justify-content: space-between; }
+  .nav-children { padding-left: 1.4rem; border-left: 2px solid rgba(6,95,70,0.15); margin: 0.1rem 0 0.1rem 1.1rem; }
   .nav-child {
-    display: block;
-    padding: 0.4rem 0.75rem;
-    color: #a5d6a7;
-    text-decoration: none;
-    font-size: 0.85rem;
+    display: block; padding: 0.38rem 0.75rem;
+    color: #6b7280; text-decoration: none; font-size: 0.78rem;
+    border-radius: 4px; transition: background 0.12s, color 0.12s;
   }
-  .nav-child:hover {
-    color: #fff;
-  }
-  .icon { width: 1.2rem; text-align: center; }
-  .chevron { margin-left: auto; }
+  .nav-child:hover { background: rgba(6,95,70,0.06); color: #064e3b; }
+  .chevron { color: #9ca3af; font-size: 0.7rem; }
 </style>
