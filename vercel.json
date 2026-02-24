@@ -1,4 +1,7 @@
 {
-  "buildCommand": "npx convex deploy --cmd 'npm run build'",
-  "framework": "sveltekit"
+  "buildCommand": "npm run build",
+  "framework": "sveltekit",
+  "env": {
+    "PUBLIC_CONVEX_URL": "https://energized-platypus-414.eu-west-1.convex.cloud"
+  }
 }
