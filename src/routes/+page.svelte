@@ -318,7 +318,16 @@
     <!-- ══ PERSONNEL ══════════════════════════════════════════════════════════ -->
     <section class="section section-tinted" data-s="workers">
       <div class="section-inner">
-        <h2 class="section-title">Personnel Registry</h2>
+
+        <!-- Worker registry hero — harvest photography header -->
+        <div class="workers-hero">
+          <div class="workers-hero-inner">
+            <p class="eyebrow">Field Operations</p>
+            <h2 class="workers-hero-title">Personnel Registry</h2>
+            <p class="workers-hero-sub">{workers.length} registered · Real-time sync</p>
+          </div>
+        </div>
+
         <div class="two-col">
 
           <div class="panel">
@@ -606,9 +615,15 @@
     display: inline-block; flex-shrink: 0;
     width: 8px; height: 8px; border-radius: 50%;
   }
-  /* Richer glow on light backgrounds */
-  .glow-green { background: #16a34a; box-shadow: 0 0 8px #16a34a, 0 0 18px rgba(22,163,74,0.5); }
-  .glow-amber { background: #d97706; box-shadow: 0 0 8px #d97706, 0 0 18px rgba(217,119,6,0.5); }
+  /* Bright, professional glow — pops on light background */
+  .glow-green {
+    background: #22c55e;
+    box-shadow: 0 0 10px #22c55e, 0 0 22px rgba(34,197,94,0.6), 0 0 40px rgba(34,197,94,0.25);
+  }
+  .glow-amber {
+    background: #f59e0b;
+    box-shadow: 0 0 10px #f59e0b, 0 0 22px rgba(245,158,11,0.6), 0 0 40px rgba(245,158,11,0.25);
+  }
 
   /* ══ MAIN ════════════════════════════════════════════════════════════════════ */
   .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
@@ -681,8 +696,8 @@
 
   .kpi-tile {
     background: rgba(255, 255, 255, 0.72);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
     padding: 1.1rem 1.2rem;
     transition: background 0.12s;
   }
@@ -709,17 +724,43 @@
   .kpi-text  { font-size: 1.1rem; }
   .kpi-sub   { font-size: 0.62rem; color: #9ca3af; margin-top: 0.3rem; }
 
+  /* ══ WORKER HERO HEADER ══════════════════════════════════════════════════════ */
+  .workers-hero {
+    border-radius: 12px; overflow: hidden; margin-bottom: 1.25rem;
+    position: relative; min-height: 110px;
+    background-image: url('/luis-guaman-6mtp5h4dG-A-unsplash.jpg');
+    background-size: cover; background-position: center 35%;
+  }
+  .workers-hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: rgba(227, 243, 253, 0.72);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+  }
+  .workers-hero-inner {
+    position: relative; z-index: 1;
+    padding: 1.4rem 1.5rem;
+  }
+  .workers-hero-title {
+    font-size: 1.15rem; font-weight: 800; color: #064e3b;
+    letter-spacing: -0.02em; margin: 0.25rem 0 0.2rem;
+  }
+  .workers-hero-sub {
+    font-size: 0.7rem; color: #065f46; font-weight: 500;
+  }
+
   /* ══ TWO-COL ═════════════════════════════════════════════════════════════════ */
   .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 
-  /* ══ PANELS — frosted glass ══════════════════════════════════════════════════ */
+  /* ══ PANELS — white glassmorphism ═══════════════════════════════════════════ */
   .panel {
     background: rgba(255, 255, 255, 0.72);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
     border: 1px solid rgba(255, 255, 255, 0.55);
     border-radius: 10px; overflow: hidden;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
   }
   .panel-hdr {
     padding: 0.6rem 0.95rem;
