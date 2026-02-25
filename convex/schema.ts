@@ -201,6 +201,21 @@ export default defineSchema({
     approvedBy: v.optional(v.id("users")),
   }),
 
+  // ── Roster / Foreman ─────────────────────────────────────────────────────────
+  rosterAssignments: defineTable({
+    date:         v.string(),         // "2026-02-25"
+    workerId:     v.id("workers"),
+    orchardBlock: v.string(),         // "Block A-12, Sector 4"
+    blockLat:     v.number(),         // GPS center latitude of block
+    blockLng:     v.number(),         // GPS center longitude of block
+    assignedBy:   v.string(),         // foreman name
+  }).index("by_date", ["date"]),
+
+  foremanOfDay: defineTable({
+    date:        v.string(),          // "2026-02-25"
+    foremanName: v.string(),
+  }).index("by_date", ["date"]),
+
   // ── Finance ──────────────────────────────────────────────────────────────────
   accounts: defineTable({
     code: v.string(),
