@@ -588,7 +588,7 @@
                         <td class="td-name">{w.name}</td>
                         <td class="td-mono">{w.saId}</td>
                         <td>{w.village}</td>
-                        <td class="td-block">{assignment?.orchardBlock ?? <span class="td-na">—</span>}</td>
+                        <td class="td-block">{#if assignment}{assignment.orchardBlock}{:else}<span class="td-na">—</span>{/if}</td>
                         <td><span class="glow-dot {todayLogs.some(l=>l.workerId===w._id) ? 'glow-green' : 'glow-amber'}" title={todayLogs.some(l=>l.workerId===w._id) ? 'Active today' : 'No logs today'}></span></td>
                         <td><button class="del-btn" onclick={() => removeWorker(w._id)}>×</button></td>
                       </tr>
