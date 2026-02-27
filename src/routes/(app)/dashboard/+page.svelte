@@ -60,40 +60,38 @@
   <p class="dash-sub">Farm · Inventory · Finance · HR — live overview</p>
 </div>
 
-<div class="stats-grid">
-  <StatCard
-    label="Vetted Workers"
-    value={stats?.workerCount ?? "–"}
-    color="#4a7c59"
-  />
-  <StatCard
-    label="Pending Applications"
-    value={stats?.pendingCount ?? "–"}
-    color="#4a6a8a"
-  />
-  <StatCard
-    label="Today's Activities"
-    value={stats?.todayActivities ?? "–"}
-    color="#7a5a3a"
-  />
-  <StatCard
-    label="Fuel Balance"
-    value={stats != null ? stats.fuelBalance : "–"}
-    unit={stats != null ? " L" : ""}
-    color="#5a4a7a"
-  />
-  <StatCard
-    label="Month Harvest"
-    value={stats != null ? stats.monthKg.toLocaleString() : "–"}
-    unit={stats != null ? " kg" : ""}
-    color="#3a6a6a"
-  />
-  <StatCard
-    label="Month Earnings"
-    value={stats != null ? `R ${stats.monthEarnings.toLocaleString()}` : "–"}
-    color="#4a6a4a"
-  />
-</div>
+{#if stats?.role === "manager"}
+  <!-- Manager KPIs -->
+  <div class="stats-grid">
+    <StatCard label="Vetted Workers"       value={stats.workerCount}                              color="#4a7c59" />
+    <StatCard label="Pending Applications" value={stats.pendingCount}                             color="#4a6a8a" />
+    <StatCard label="Today's Activities"   value={stats.todayActivities}                          color="#7a5a3a" />
+    <StatCard label="Fuel Balance"         value={stats.fuelBalance} unit=" L"                   color="#5a4a7a" />
+    <StatCard label="Month Harvest"        value={stats.monthKg.toLocaleString()} unit=" kg"     color="#3a6a6a" />
+    <StatCard label="Month Earnings"       value={`R ${stats.monthEarnings.toLocaleString()}`}   color="#4a6a4a" />
+  </div>
+
+{:else if stats?.role === "worker"}
+  <!-- Worker KPIs — farm-wide figures they contributed to -->
+  <div class="worker-farm-pill">
+    Working at <strong>{stats.farmName}</strong>
+    <span class="tier-badge">{stats.farmTier}</span>
+  </div>
+  <div class="stats-grid">
+    <StatCard label="Today's Activities (farm)" value={stats.todayActivities}                        color="#7a5a3a" />
+    <StatCard label="Fuel Balance (farm)"        value={stats.fuelBalance} unit=" L"                color="#5a4a7a" />
+    <StatCard label="Month Harvest (farm)"       value={stats.monthKg.toLocaleString()} unit=" kg"  color="#3a6a6a" />
+    <StatCard label="Month Earnings (farm)"      value={`R ${stats.monthEarnings.toLocaleString()}`} color="#4a6a4a" />
+  </div>
+
+{:else}
+  <!-- Loading skeleton -->
+  <div class="stats-grid">
+    {#each Array(6) as _}
+      <div class="skel-card"></div>
+    {/each}
+  </div>
+{/if}
 
 <!-- Live timestamp footer -->
 <div class="last-updated">
@@ -155,6 +153,28 @@
     font-size: 0.65rem; color: #6b7280; letter-spacing: 0.02em;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
   }
+
+  /* ── Worker farm pill ── */
+  .worker-farm-pill {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 999px;
+    padding: 0.35rem 0.9rem; font-size: 0.78rem; color: #065f46;
+    margin-bottom: 1rem;
+  }
+  .tier-badge {
+    background: #065f46; color: #fff;
+    font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+    border-radius: 999px; padding: 0.15rem 0.5rem;
+  }
+
+  /* ── Loading skeleton ── */
+  .skel-card {
+    height: 90px; border-radius: 8px;
+    background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+  }
+  @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 
   @media (max-width: 768px) {
     .status-bar { margin: -1rem -1rem 0; padding: 0 1rem; }

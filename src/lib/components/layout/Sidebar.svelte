@@ -60,7 +60,7 @@
         { label: "Reports", href: "/finance/reports" },
       ],
     },
-    { label: "Reports", href: "/reports", icon: "📈" },
+    { label: "Reports",  href: "/reports",  icon: "📈" },
     { label: "Settings", href: "/settings", icon: "⚙️" },
   ];
 
@@ -97,6 +97,16 @@
       {/if}
     {/each}
   </nav>
+
+  <div class="sidebar-footer">
+    <a href="/logout" class="logout-btn">
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <path d="M7 3H4a1 1 0 00-1 1v12a1 1 0 001 1h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M13 13l3-3-3-3M16 10H8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Sign out
+    </a>
+  </div>
 </aside>
 
 <style>
@@ -147,4 +157,20 @@
   }
   .nav-child:hover { background: rgba(6,95,70,0.06); color: #064e3b; }
   .chevron { color: #9ca3af; font-size: 0.7rem; }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 0.75rem 1rem 0.5rem;
+    border-top: 1px solid rgba(0,0,0,0.06);
+  }
+  .logout-btn {
+    display: flex; align-items: center; gap: 0.55rem;
+    width: 100%; padding: 0.55rem 0.75rem;
+    color: #6b7280; text-decoration: none;
+    font-size: 0.8rem; font-weight: 500;
+    border-radius: 6px;
+    transition: background 0.12s, color 0.12s;
+  }
+  .logout-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .logout-btn:hover { background: rgba(220, 38, 38, 0.07); color: #dc2626; }
 </style>

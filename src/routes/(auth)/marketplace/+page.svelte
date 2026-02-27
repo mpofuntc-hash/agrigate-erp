@@ -61,14 +61,21 @@
     unsubProfile?.();
   });
 
+  function setFarmCookie(farmId: string) {
+    // Mark that the worker has an active application — not vetted yet, but farmId is known.
+    // hooks.server.ts will redirect to /pending-approval (not /marketplace) on future loads.
+    document.cookie = `agrigate_farm_id=${farmId}; path=/; max-age=31536000; SameSite=Lax`;
+  }
+
   async function handleCodeSubmit(e: Event) {
     e.preventDefault();
     codeError   = null;
     codeLoading = true;
     try {
-      await convex.mutation(api.users.joinFarmByCode, {
+      const farmId = await convex.mutation(api.users.joinFarmByCode, {
         code: inviteCode.trim().toUpperCase(),
-      });
+      }) as string;
+      setFarmCookie(farmId);
       goto("/pending-approval");
     } catch (err: any) {
       codeError = err?.message ?? "Invalid invite code";
@@ -82,6 +89,7 @@
     applyingTo  = farmId;
     try {
       await convex.mutation(api.users.applyToFarm, { farmId: farmId as any });
+      setFarmCookie(farmId);
       goto("/pending-approval");
     } catch (err: any) {
       applyError = err?.message ?? "Could not submit application";
