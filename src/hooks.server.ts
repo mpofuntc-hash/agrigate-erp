@@ -1,7 +1,7 @@
 import { redirect, type Handle } from "@sveltejs/kit";
 
 const PUBLIC_PATHS   = ["/login", "/about", "/api", "/auth/callback"];
-const AUTH_PATHS     = ["/profile-setup", "/farm-setup", "/marketplace", "/pending-approval"];
+const AUTH_PATHS     = ["/profile-setup", "/complete-profile", "/farm-setup", "/marketplace", "/pending-approval"];
 const TITAN_PATHS    = ["/dashboard/cctv", "/dashboard/weather"];
 const STANDARD_PATHS = ["/dashboard/fuel"];
 

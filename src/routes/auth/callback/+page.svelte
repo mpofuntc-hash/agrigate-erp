@@ -44,7 +44,7 @@
       // Check if profile is complete (redirect to complete-profile if not)
       const profile = await convex.query(api.userProfile.getMyProfile, {});
       if (!profile || !profile.isProfileComplete) {
-        goto("/complete-profile");
+        goto("/profile-setup");
       } else {
         // Set profile-complete cookie and go to dashboard
         document.cookie = "agrigate_profile_complete=1; path=/; max-age=31536000; SameSite=Lax";
