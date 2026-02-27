@@ -8,8 +8,11 @@
  * @module
  */
 
+import type * as activities from "../activities.js";
 import type * as auth from "../auth.js";
 import type * as clockEvents from "../clockEvents.js";
+import type * as crons from "../crons.js";
+import type * as farms from "../farms.js";
 import type * as http from "../http.js";
 import type * as modules_fields from "../modules/fields.js";
 import type * as modules_finance from "../modules/finance.js";
@@ -17,9 +20,11 @@ import type * as modules_hr from "../modules/hr.js";
 import type * as modules_inventory from "../modules/inventory.js";
 import type * as modules_procurement from "../modules/procurement.js";
 import type * as modules_sales from "../modules/sales.js";
+import type * as payroll from "../payroll.js";
 import type * as protectedAnalytics from "../protectedAnalytics.js";
 import type * as roster from "../roster.js";
 import type * as userProfile from "../userProfile.js";
+import type * as users from "../users.js";
 import type * as workers from "../workers.js";
 import type * as yieldLogs from "../yieldLogs.js";
 
@@ -30,8 +35,11 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  activities: typeof activities;
   auth: typeof auth;
   clockEvents: typeof clockEvents;
+  crons: typeof crons;
+  farms: typeof farms;
   http: typeof http;
   "modules/fields": typeof modules_fields;
   "modules/finance": typeof modules_finance;
@@ -39,9 +47,11 @@ declare const fullApi: ApiFromModules<{
   "modules/inventory": typeof modules_inventory;
   "modules/procurement": typeof modules_procurement;
   "modules/sales": typeof modules_sales;
+  payroll: typeof payroll;
   protectedAnalytics: typeof protectedAnalytics;
   roster: typeof roster;
   userProfile: typeof userProfile;
+  users: typeof users;
   workers: typeof workers;
   yieldLogs: typeof yieldLogs;
 }>;

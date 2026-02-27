@@ -1,20 +1,18 @@
 <script lang="ts">
   import { convex, api } from "$lib/convex/client";
 
-  let loading = $state<string | null>(null); // holds provider name while loading
+  let loading = $state<string | null>(null);
   let error   = $state<string | null>(null);
 
   async function signInWith(provider: string) {
     error   = null;
     loading = provider;
     try {
-      // Generate a random PKCE-style verifier and store it for the callback
       const verifier = Array.from(crypto.getRandomValues(new Uint8Array(48)))
         .map((b) => b.toString(16).padStart(2, "0"))
         .join("");
       sessionStorage.setItem("convexAuthVerifier", verifier);
 
-      // Ask Convex Auth to initiate the OAuth flow — returns a redirect URL
       const result = await convex.action(api.auth.signIn, {
         provider,
         params: { redirectTo: window.location.origin + "/auth/callback" },
@@ -36,14 +34,77 @@
 <svelte:head><title>Sign In — AgriGate</title></svelte:head>
 
 <div class="page">
-  <div class="vid-overlay"></div>
+  <!-- Animated background layers -->
+  <div class="bg-layer bg-grad"></div>
+  <div class="bg-layer bg-grain"></div>
+  <div class="bg-layer bg-glow"></div>
 
+  <!-- LEFT: Feature preview panel (hidden on mobile) -->
+  <div class="preview-panel" aria-hidden="true">
+    <div class="preview-inner">
+      <div class="preview-badge">Live Platform Preview</div>
+      <h2 class="preview-title">Your complete<br/>farm command centre</h2>
+      <p class="preview-sub">Everything your operation needs — workers, harvests, fuel, payroll — in one place.</p>
+
+      <!-- Mock stat cards -->
+      <div class="mock-stats">
+        <div class="mstat">
+          <span class="mstat-val">24</span>
+          <span class="mstat-lbl">Vetted Workers</span>
+        </div>
+        <div class="mstat">
+          <span class="mstat-val">R 42 580</span>
+          <span class="mstat-lbl">Month Earnings</span>
+        </div>
+        <div class="mstat">
+          <span class="mstat-val">1 240 kg</span>
+          <span class="mstat-lbl">Harvested</span>
+        </div>
+        <div class="mstat">
+          <span class="mstat-val">87 L</span>
+          <span class="mstat-lbl">Fuel Balance</span>
+        </div>
+      </div>
+
+      <!-- Feature list -->
+      <ul class="feature-list">
+        <li>
+          <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#4ade80" stroke-width="1.5"/><path d="M5 8l2 2 4-4" stroke="#4ade80" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          GPS-verified activity logging (offline-first)
+        </li>
+        <li>
+          <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#4ade80" stroke-width="1.5"/><path d="M5 8l2 2 4-4" stroke="#4ade80" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Worker vetting, applications & payroll
+        </li>
+        <li>
+          <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#4ade80" stroke-width="1.5"/><path d="M5 8l2 2 4-4" stroke="#4ade80" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Crop & livestock harvest tracking
+        </li>
+        <li>
+          <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#4ade80" stroke-width="1.5"/><path d="M5 8l2 2 4-4" stroke="#4ade80" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Weather alerts & CCTV monitoring (Titan)
+        </li>
+      </ul>
+
+      <!-- Mock activity feed -->
+      <div class="mock-feed">
+        <p class="mock-feed-title">Recent Activity</p>
+        <div class="feed-item"><span class="feed-dot dot-green"></span><span class="feed-text">Harvest logged · 48 kg citrus · 14:32</span></div>
+        <div class="feed-item"><span class="feed-dot dot-blue"></span><span class="feed-text">Worker clocked in · Gate 3 · 06:01</span></div>
+        <div class="feed-item"><span class="feed-dot dot-amber"></span><span class="feed-text">Fuel fill · 60 L · 05:48</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Login card -->
   <div class="card">
     <div class="brand">
       <p class="brand-sup">AgriGate Platform</p>
       <h1 class="brand-name">AgriGate</h1>
       <p class="brand-sub">Multi-tenant farm management</p>
     </div>
+
+    <p class="signin-label">Sign in to continue</p>
 
     <div class="providers">
       <button
@@ -110,43 +171,213 @@
 </div>
 
 <style>
+  /* ── Page shell ── */
   .page {
     min-height: 100vh;
-    display: flex; align-items: center; justify-content: center;
-    padding: 1.5rem; position: relative; overflow: hidden;
-    background: linear-gradient(135deg, #064e3b 0%, #065f46 40%, #047857 100%);
+    display: flex; align-items: stretch;
+    position: relative; overflow: hidden;
+    font-family: 'Inter', system-ui, sans-serif;
   }
 
-  .vid-overlay {
-    position: absolute; inset: 0; z-index: 0;
-    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  /* ── Animated background ── */
+  .bg-layer { position: absolute; inset: 0; }
+
+  .bg-grad {
+    background: linear-gradient(
+      140deg,
+      #022c22 0%,
+      #064e3b 30%,
+      #065f46 55%,
+      #047857 75%,
+      #0d9488 100%
+    );
+    animation: gradShift 18s ease-in-out infinite alternate;
+  }
+  @keyframes gradShift {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
   }
 
+  /* Film-grain texture overlay */
+  .bg-grain {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    opacity: 0.35;
+    mix-blend-mode: overlay;
+  }
+
+  /* Soft radial glow in bottom-right */
+  .bg-glow {
+    background: radial-gradient(ellipse 70% 60% at 80% 90%, rgba(52, 211, 153, 0.18) 0%, transparent 70%);
+    animation: glowPulse 6s ease-in-out infinite alternate;
+  }
+  @keyframes glowPulse {
+    from { opacity: 0.6; }
+    to   { opacity: 1; }
+  }
+
+  /* ── Preview panel (left) ── */
+  .preview-panel {
+    flex: 1;
+    display: flex; align-items: center; justify-content: flex-end;
+    padding: 3rem 3.5rem 3rem 3rem;
+    position: relative; z-index: 1;
+  }
+
+  .preview-inner {
+    max-width: 420px;
+    color: #fff;
+  }
+
+  .preview-badge {
+    display: inline-block;
+    padding: 0.3rem 0.8rem;
+    background: rgba(52, 211, 153, 0.18);
+    border: 1px solid rgba(52, 211, 153, 0.35);
+    border-radius: 100px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #6ee7b7;
+    margin-bottom: 1.25rem;
+  }
+
+  .preview-title {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1.18;
+    letter-spacing: -0.03em;
+    margin: 0 0 0.75rem;
+    color: #fff;
+  }
+
+  .preview-sub {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.65);
+    line-height: 1.6;
+    margin: 0 0 2rem;
+  }
+
+  /* Mock stat cards */
+  .mock-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .mstat {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    backdrop-filter: blur(12px);
+    border-radius: 10px;
+    padding: 0.9rem 1rem;
+  }
+
+  .mstat-val {
+    display: block;
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    margin-bottom: 0.3rem;
+  }
+
+  .mstat-lbl {
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* Feature checklist */
+  .feature-list {
+    list-style: none; margin: 0 0 1.75rem; padding: 0;
+    display: flex; flex-direction: column; gap: 0.55rem;
+  }
+
+  .feature-list li {
+    display: flex; align-items: center; gap: 0.6rem;
+    font-size: 0.82rem;
+    color: rgba(255,255,255,0.8);
+  }
+
+  .feature-list svg {
+    width: 16px; height: 16px; flex-shrink: 0;
+  }
+
+  /* Mock activity feed */
+  .mock-feed {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 0.9rem 1rem;
+  }
+
+  .mock-feed-title {
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: rgba(255,255,255,0.4);
+    margin: 0 0 0.6rem;
+  }
+
+  .feed-item {
+    display: flex; align-items: center; gap: 0.55rem;
+    padding: 0.3rem 0;
+  }
+
+  .feed-dot {
+    width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+  }
+  .dot-green { background: #4ade80; }
+  .dot-blue  { background: #60a5fa; }
+  .dot-amber { background: #fbbf24; }
+
+  .feed-text {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.65);
+  }
+
+  /* ── Login card (right) ── */
   .card {
     position: relative; z-index: 1;
-    width: 100%; max-width: 380px;
+    width: 420px; flex-shrink: 0;
+    display: flex; flex-direction: column; justify-content: center;
     background: rgba(255, 255, 255, 0.97);
-    border-radius: 16px; padding: 2.75rem 2.25rem;
-    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.3);
+    padding: 3rem 2.5rem;
+    box-shadow: -24px 0 80px rgba(0,0,0,0.25);
   }
 
-  .brand { margin-bottom: 2rem; }
-  .brand-sup  { font-size: 0.6rem; font-weight: 700; color: #9ca3af; letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 0.4rem; }
-  .brand-name { font-size: 1.75rem; font-weight: 800; color: #064e3b; letter-spacing: -0.02em; }
-  .brand-sub  { font-size: 0.78rem; color: #9ca3af; margin-top: 0.2rem; }
+  .brand { margin-bottom: 1.75rem; }
+  .brand-sup  { font-size: 0.58rem; font-weight: 700; color: #9ca3af; letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 0.4rem; }
+  .brand-name { font-size: 2rem; font-weight: 800; color: #064e3b; letter-spacing: -0.03em; }
+  .brand-sub  { font-size: 0.78rem; color: #9ca3af; margin-top: 0.25rem; }
+
+  .signin-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 1rem;
+  }
 
   .providers { display: flex; flex-direction: column; gap: 0.75rem; }
 
   .provider-btn {
     display: flex; align-items: center; justify-content: center; gap: 0.6rem;
-    width: 100%; padding: 0.72rem 1rem;
+    width: 100%; padding: 0.78rem 1rem;
     background: #fff; color: #111827; font-weight: 600; font-size: 0.88rem;
     border: 1.5px solid #e5e7eb; border-radius: 8px; cursor: pointer;
-    transition: border-color 0.12s, box-shadow 0.12s, background 0.12s;
+    transition: border-color 0.12s, box-shadow 0.12s;
     font-family: inherit;
   }
   .provider-btn:hover:not(:disabled) {
-    border-color: #065f46; box-shadow: 0 0 0 3px rgba(6, 95, 70, 0.1);
+    border-color: #065f46;
+    box-shadow: 0 0 0 3px rgba(6, 95, 70, 0.1);
   }
   .provider-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
@@ -160,7 +391,7 @@
   @keyframes spin { to { transform: rotate(360deg); } }
 
   .error {
-    margin-top: 1rem; padding: 0.6rem 0.9rem;
+    margin-top: 1rem; padding: 0.65rem 0.9rem;
     background: #fef2f2; color: #991b1b;
     border: 1px solid #fecaca; border-radius: 6px;
     font-size: 0.8rem; text-align: center;
@@ -168,6 +399,18 @@
 
   .footer {
     margin-top: 1.75rem; text-align: center;
-    font-size: 0.65rem; color: #9ca3af; line-height: 1.6;
+    font-size: 0.62rem; color: #9ca3af; line-height: 1.6;
+  }
+
+  /* ── Mobile: stack everything, hide preview ── */
+  @media (max-width: 860px) {
+    .page { align-items: center; justify-content: center; padding: 1.5rem; }
+    .preview-panel { display: none; }
+    .card {
+      width: 100%; max-width: 400px;
+      border-radius: 16px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.3);
+      padding: 2.5rem 2rem;
+    }
   }
 </style>

@@ -1,10 +1,46 @@
 <script lang="ts">
+  import { onMount, onDestroy } from "svelte";
+  import { convex, api } from "$lib/convex/client";
   import StatCard from "$lib/components/ui/StatCard.svelte";
 
-  const lastUpdated = new Date().toLocaleString("en-ZA", {
-    weekday: "long", day: "numeric", month: "long", year: "numeric",
-    hour: "2-digit", minute: "2-digit", second: "2-digit"
+  type Stats = {
+    farmName: string;
+    farmTier: string;
+    workerCount: number;
+    pendingCount: number;
+    todayActivities: number;
+    fuelBalance: number;
+    monthKg: number;
+    monthEarnings: number;
+    role: string;
+  };
+
+  let stats    = $state<Stats | null>(null);
+  let unsub: (() => void) | undefined;
+  let lastUpdated = $state(timestamp());
+
+  function timestamp() {
+    return new Date().toLocaleString("en-ZA", {
+      weekday: "long", day: "numeric", month: "long", year: "numeric",
+      hour: "2-digit", minute: "2-digit", second: "2-digit",
+    });
+  }
+
+  onMount(() => {
+    unsub = convex.onUpdate(api.dashboard.getDashboardStats, {}, (data) => {
+      stats       = data as Stats | null;
+      lastUpdated = timestamp();
+    });
   });
+
+  onDestroy(() => unsub?.());
+
+  const farmLabel = $derived(
+    stats
+      ? `${stats.farmName} · ${stats.farmTier.charAt(0).toUpperCase() + stats.farmTier.slice(1)} Tier`
+      : "Your Farm"
+  );
+  const roleLabel = $derived(stats?.role === "manager" ? "Manager View" : "Worker View");
 </script>
 
 <svelte:head><title>Dashboard — AgriGate ERP</title></svelte:head>
@@ -15,22 +51,48 @@
   <span class="st-sep">·</span>
   <span class="st-item"><span class="glow-dot glow-green"></span>GPS: Fixed</span>
   <span class="st-sep">·</span>
-  <span class="st-muted">Version 1.0.4-PRO</span>
+  <span class="st-muted">{roleLabel}</span>
 </div>
 
 <div class="dash-header">
-  <p class="dash-eyebrow">ZZ2 Farms · Real-Time Operations</p>
+  <p class="dash-eyebrow">{farmLabel} · Real-Time Operations</p>
   <h2 class="dash-title">Operations Dashboard</h2>
   <p class="dash-sub">Farm · Inventory · Finance · HR — live overview</p>
 </div>
 
 <div class="stats-grid">
-  <StatCard label="Active Fields"     value="0" unit="ha" color="#4a7c59" />
-  <StatCard label="Open Sales Orders" value="0"           color="#4a6a8a" />
-  <StatCard label="Open POs"          value="0"           color="#7a5a3a" />
-  <StatCard label="Employees"         value="0"           color="#5a4a7a" />
-  <StatCard label="Month Revenue"     value="R 0"         color="#3a6a6a" />
-  <StatCard label="Stock Items"       value="0"           color="#4a6a4a" />
+  <StatCard
+    label="Vetted Workers"
+    value={stats?.workerCount ?? "–"}
+    color="#4a7c59"
+  />
+  <StatCard
+    label="Pending Applications"
+    value={stats?.pendingCount ?? "–"}
+    color="#4a6a8a"
+  />
+  <StatCard
+    label="Today's Activities"
+    value={stats?.todayActivities ?? "–"}
+    color="#7a5a3a"
+  />
+  <StatCard
+    label="Fuel Balance"
+    value={stats != null ? stats.fuelBalance : "–"}
+    unit={stats != null ? " L" : ""}
+    color="#5a4a7a"
+  />
+  <StatCard
+    label="Month Harvest"
+    value={stats != null ? stats.monthKg.toLocaleString() : "–"}
+    unit={stats != null ? " kg" : ""}
+    color="#3a6a6a"
+  />
+  <StatCard
+    label="Month Earnings"
+    value={stats != null ? `R ${stats.monthEarnings.toLocaleString()}` : "–"}
+    color="#4a6a4a"
+  />
 </div>
 
 <!-- Live timestamp footer -->
