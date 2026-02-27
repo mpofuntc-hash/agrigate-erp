@@ -1,7 +1,11 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { authTables } from "@convex-dev/auth/server";
 
 export default defineSchema({
+  // ── @convex-dev/auth internal tables (authAccounts, authSessions, authUsers, …) ─
+  ...authTables,
+
   // ── Workers ──────────────────────────────────────────────────────────────────
   workers: defineTable({
     name: v.string(),
@@ -21,7 +25,7 @@ export default defineSchema({
     .index("by_timestamp", ["timestamp"])
     .index("by_worker",    ["workerId"]),
 
-  // ── Auth / Users ────────────────────────────────────────────────────────────
+  // ── Auth / Users (legacy — kept for existing module foreign-key references) ───
   users: defineTable({
     name: v.string(),
     email: v.string(),
@@ -29,6 +33,107 @@ export default defineSchema({
     department: v.optional(v.string()),
     isActive: v.boolean(),
   }).index("by_email", ["email"]),
+
+  // ── User Profiles — OAuth + RBAC + POPIA ─────────────────────────────────────
+  userProfiles: defineTable({
+    // Linked to Convex Auth (identity.subject)
+    convexAuthId:      v.string(),
+    email:             v.optional(v.string()),
+    provider:          v.optional(v.string()),    // "google" | "apple" | "microsoft"
+
+    // POPIA-protected fields — wiped on anonymisation request
+    fullName:          v.optional(v.string()),
+    saId:              v.optional(v.string()),    // 13-digit SA ID or passport number
+    phone:             v.optional(v.string()),
+    isAnonymized:      v.boolean(),               // soft-delete / right-to-erasure flag
+    isProfileComplete: v.boolean(),               // first-login gate
+
+    // RBAC — multi-tenant roles
+    role: v.union(
+      v.literal("manager"),   // owns/manages a farm
+      v.literal("worker")     // labourer, needs vetting
+    ),
+    isActive: v.boolean(),
+
+    // Multi-tenancy
+    farmId:           v.optional(v.id("farms")),
+    isVetted:         v.optional(v.boolean()),          // manager approved this worker
+    isLookingForWork: v.optional(v.boolean()),           // shows in getPotentialHires
+    trustScore:       v.optional(v.number()),            // 0-100, computed from activity history
+  })
+    .index("by_convex_auth_id", ["convexAuthId"])
+    .index("by_email",          ["email"])
+    .index("by_farm",           ["farmId"]),
+
+  // ── Farms (root tenant) ──────────────────────────────────────────────────────
+  farms: defineTable({
+    name:       v.string(),
+    ownerId:    v.string(),          // convexAuthId of manager
+    inviteCode: v.string(),          // 6-char uppercase alphanumeric (no O/0/I/1)
+    tier:       v.union(v.literal("basic"), v.literal("standard"), v.literal("titan")),
+    isHiring:   v.boolean(),         // shows up in worker marketplace
+    lat:        v.optional(v.number()),
+    lng:        v.optional(v.number()),
+    province:   v.optional(v.string()),
+    cropTypes:  v.optional(v.array(v.string())), // ["citrus", "stone fruit"]
+  })
+    .index("by_owner",       ["ownerId"])
+    .index("by_invite_code", ["inviteCode"]),
+
+  // ── Universal Activity Log ────────────────────────────────────────────────────
+  activities: defineTable({
+    farmId:    v.id("farms"),
+    workerId:  v.optional(v.string()),  // convexAuthId — optional (system events)
+    category:  v.union(
+      v.literal("crop"),
+      v.literal("livestock"),
+      v.literal("fuel"),
+      v.literal("security"),
+      v.literal("weather")
+    ),
+    type:         v.string(),           // "harvest", "spray", "clock_in", "fuel_fill", etc.
+    value:        v.optional(v.number()),
+    unit:         v.optional(v.string()),
+    lat:          v.optional(v.number()),
+    lng:          v.optional(v.number()),
+    accuracy:     v.optional(v.number()),
+    isSuspicious: v.optional(v.boolean()),
+    notes:        v.optional(v.string()),
+    timestamp:    v.number(),           // Date.now()
+    syncedAt:     v.optional(v.number()),
+  })
+    .index("by_farm",      ["farmId"])
+    .index("by_worker",    ["workerId"])
+    .index("by_timestamp", ["timestamp"]),
+
+  // ── Worker Applications ───────────────────────────────────────────────────────
+  applications: defineTable({
+    workerId:   v.string(),            // convexAuthId
+    farmId:     v.id("farms"),
+    status:     v.union(v.literal("pending"), v.literal("accepted"), v.literal("rejected")),
+    appliedAt:  v.number(),
+    reviewedAt: v.optional(v.number()),
+    reviewedBy: v.optional(v.string()), // convexAuthId of manager
+    message:    v.optional(v.string()),
+  })
+    .index("by_worker",      ["workerId"])
+    .index("by_farm",        ["farmId"])
+    .index("by_farm_status", ["farmId", "status"]),
+
+  // ── Clock Events — GPS anti-fraud / ghost worker prevention ──────────────────
+  clockEvents: defineTable({
+    workerId:         v.id("workers"),
+    type:             v.union(v.literal("in"), v.literal("out")),
+    timestamp:        v.number(),
+    lat:              v.number(),
+    lng:              v.number(),
+    accuracy:         v.number(),                // metres — <5m triggers suspicion
+    isSuspicious:     v.boolean(),               // mock location flag
+    suspiciousReason: v.optional(v.string()),
+    reviewedBy:       v.optional(v.string()),    // convexAuthId of employer who cleared it
+  })
+    .index("by_worker",     ["workerId"])
+    .index("by_suspicious", ["isSuspicious"]),
 
   // ── Farm Management ──────────────────────────────────────────────────────────
   fields: defineTable({
