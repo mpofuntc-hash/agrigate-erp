@@ -22,8 +22,8 @@ Thumbs.db
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
-# Convex
-convex/_generated/
+# Convex — _generated is committed so Vercel build can resolve types without convex deploy
+# convex/_generated/
 
 .vercel
 static/Despo.mp4
