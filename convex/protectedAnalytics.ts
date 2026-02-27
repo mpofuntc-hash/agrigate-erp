@@ -16,7 +16,7 @@ async function requireEmployer(ctx: QueryCtx) {
     .withIndex("by_convex_auth_id", (q) => q.eq("convexAuthId", identity.subject))
     .first();
 
-  if (!profile || profile.role !== "employer") return null;
+  if (!profile || profile.role !== "manager") return null;
   return profile;
 }
 

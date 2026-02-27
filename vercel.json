@@ -2,6 +2,6 @@
   "buildCommand": "npm run build",
   "framework": "sveltekit",
   "env": {
-    "PUBLIC_CONVEX_URL": "https://energized-platypus-414.eu-west-1.convex.cloud"
+    "PUBLIC_CONVEX_URL": "https://elegant-goat-329.convex.cloud"
   }
 }
