@@ -1,15 +1,35 @@
 <script lang="ts">
+  import { onMount, onDestroy } from "svelte";
+  import { page } from "$app/state";
+  import { convex, api } from "$lib/convex/client";
   import Sidebar from "$lib/components/layout/Sidebar.svelte";
   import TopBar  from "$lib/components/layout/TopBar.svelte";
-  import { page } from "$app/state";
 
-  let { children } = $props();
+  let { children, data } = $props();
+
+  let userName = $state<string | null>(null);
+  let userRole = $state<string | null>(null);
+  let unsub: (() => void) | undefined;
+
+  onMount(() => {
+    const token = localStorage.getItem("convexAuthToken");
+    if (token) {
+      convex.setAuth(async () => token);
+      unsub = convex.onUpdate(api.userProfile.getMyProfile, {}, (profile: any) => {
+        userName = profile?.fullName ?? null;
+        userRole = profile?.role    ?? null;
+      });
+    }
+  });
+
+  onDestroy(() => unsub?.());
 
   const bottomNav = [
     { href: "/dashboard",              prefix: "/dashboard",       icon: "📊", label: "Dashboard" },
     { href: "/farm-management/fields", prefix: "/farm-management", icon: "🌾", label: "Farm"      },
     { href: "/inventory/products",     prefix: "/inventory",       icon: "📦", label: "Inventory" },
     { href: "/hr/employees",           prefix: "/hr",              icon: "👷", label: "HR"        },
+    { href: "/finance/accounts",       prefix: "/finance",         icon: "💰", label: "Finance"   },
     { href: "/settings",               prefix: "/settings",        icon: "⚙️",  label: "Settings"  },
   ];
 </script>
@@ -17,7 +37,7 @@
 <div class="app-shell">
   <Sidebar />
   <div class="main-area">
-    <TopBar />
+    <TopBar tier={data.tier} {userName} {userRole} />
     <main class="content">
       {@render children()}
     </main>
@@ -60,12 +80,12 @@
 
   @media (max-width: 768px) {
     :global(.sidebar) { display: none !important; }
-    .content { padding: 1rem 1rem calc(1rem + 60px); }
+    .content { padding: 1rem 1rem calc(1rem + 64px); }
 
     .bottom-nav {
       display: flex;
       position: fixed; bottom: 0; left: 0; right: 0;
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border-top: 1px solid rgba(0, 0, 0, 0.07);
@@ -83,6 +103,6 @@
     .bn-item:hover  { color: #374151; }
     .bn-item.active { color: #064e3b; border-top: 2px solid #065f46; }
     .bn-icon  { font-size: 1.1rem; line-height: 1; }
-    .bn-label { font-size: 0.6rem; font-weight: 600; }
+    .bn-label { font-size: 0.58rem; font-weight: 600; }
   }
 </style>

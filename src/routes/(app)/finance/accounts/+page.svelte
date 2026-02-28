@@ -1,26 +1,9 @@
 <script lang="ts">
-  import DataTable from "$lib/components/ui/DataTable.svelte";
-
-  const columns = [
-    { key: "code", label: "Code" },
-    { key: "name", label: "Account Name" },
-    { key: "type", label: "Type" },
-    { key: "parentCode", label: "Parent" },
-    { key: "isActive", label: "Active" },
-  ];
-  const rows: Record<string, unknown>[] = [];
+  import ComingSoon from "$lib/components/ui/ComingSoon.svelte";
+  const features = [
+    "Account hierarchy",
+    "Budget allocation",
+    "Cost centre mapping",  ];
 </script>
-
-<svelte:head><title>Chart of Accounts – ZZ2 ERP</title></svelte:head>
-
-<div class="page-header">
-  <h2>Chart of Accounts</h2>
-  <button class="btn-primary">+ New Account</button>
-</div>
-<DataTable {columns} {rows} />
-
-<style>
-  .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-  h2 { margin: 0; color: #1b5e20; font-size: 1.3rem; }
-  .btn-primary { background: #2e7d32; color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 600; }
-</style>
+<svelte:head><title>Chart of Accounts — AgriGate</title></svelte:head>
+<ComingSoon title="Chart of Accounts" icon="📊" description="Configure your financial account structure & categories." {features} />

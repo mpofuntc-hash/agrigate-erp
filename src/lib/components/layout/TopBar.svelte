@@ -1,5 +1,32 @@
 <script lang="ts">
-  let { title = "AgriGate ERP" }: { title?: string } = $props();
+  let {
+    title    = "AgriGate ERP",
+    tier     = "basic",
+    userName = null,
+    userRole = null,
+  }: {
+    title?:    string;
+    tier?:     string;
+    userName?: string | null;
+    userRole?: string | null;
+  } = $props();
+
+  const tierLabel: Record<string, string> = {
+    standard: "Standard",
+    titan:    "Titan",
+  };
+
+  const tierColor: Record<string, string> = {
+    standard: "#2563eb",
+    titan:    "#7c3aed",
+  };
+
+  // Show first name, or fall back to role label
+  const displayName = $derived(
+    userName
+      ? userName.split(" ")[0]
+      : userRole === "manager" ? "Manager" : userRole === "worker" ? "Worker" : "…"
+  );
 </script>
 
 <header class="topbar">
@@ -9,7 +36,12 @@
       <span class="glow-dot"></span>
       Live
     </div>
-    <span class="user-chip">Admin</span>
+    {#if tier && tier !== "basic"}
+      <span class="tier-chip" style="background:{tierColor[tier] ?? '#6b7280'}">
+        {tierLabel[tier] ?? tier}
+      </span>
+    {/if}
+    <span class="user-chip">{displayName}</span>
   </div>
 </header>
 
@@ -28,7 +60,8 @@
   .page-title {
     font-size: 0.95rem; font-weight: 700; color: #064e3b; margin: 0;
   }
-  .topbar-right { display: flex; align-items: center; gap: 0.75rem; }
+  .topbar-right { display: flex; align-items: center; gap: 0.6rem; }
+
   .status-pill {
     display: flex; align-items: center; gap: 0.38rem;
     font-size: 0.68rem; font-weight: 600; color: #065f46;
@@ -43,6 +76,13 @@
     animation: pulse 2s infinite;
   }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+  .tier-chip {
+    color: #fff; font-size: 0.62rem; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 0.2rem 0.6rem; border-radius: 999px;
+  }
+
   .user-chip {
     background: rgba(255, 255, 255, 0.8);
     border: 1px solid rgba(0, 0, 0, 0.1);
