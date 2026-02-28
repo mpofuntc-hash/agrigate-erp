@@ -15,10 +15,25 @@
   };
 
   let application = $state<Application | null>(null);
-  let farmName    = $state<string | null>(null);
+  let farm        = $state<Farm | null>(null);
 
   let unsubApp:  (() => void) | null = null;
   let unsubFarm: (() => void) | null = null;
+
+  // Called when application is accepted — fetches real farm tier before
+  // setting cookies so Titan/Standard workers get the right feature access.
+  async function handleAccepted(app: Application) {
+    const maxAge = "max-age=31536000";
+    let tier = farm?.tier;
+    if (!tier) {
+      const fetched = await convex.query(api.farms.getFarm, { farmId: app.farmId as any }) as Farm | null;
+      tier = fetched?.tier ?? "basic";
+    }
+    document.cookie = `agrigate_vetted=1; path=/; ${maxAge}; SameSite=Lax`;
+    document.cookie = `agrigate_farm_id=${app.farmId}; path=/; ${maxAge}; SameSite=Lax`;
+    document.cookie = `agrigate_tier=${tier}; path=/; ${maxAge}; SameSite=Lax`;
+    goto("/dashboard");
+  }
 
   onMount(() => {
     const token = localStorage.getItem("convexAuthToken");
@@ -29,23 +44,17 @@
       application = app as Application | null;
 
       if (app?.status === "accepted") {
-        const maxAge = "max-age=31536000";
-        document.cookie = `agrigate_vetted=1; path=/; ${maxAge}; SameSite=Lax`;
-        document.cookie = `agrigate_farm_id=${app.farmId}; path=/; ${maxAge}; SameSite=Lax`;
-        document.cookie = `agrigate_tier=basic; path=/; ${maxAge}; SameSite=Lax`;
-        goto("/dashboard");
+        handleAccepted(app as Application);
         return;
       }
 
-      // Subscribe to the farm they applied to
-      if (app?.farmId && !farmName) {
+      // Subscribe to the farm they applied to (also caches tier for handleAccepted)
+      if (app?.farmId && !farm) {
         unsubFarm?.();
         unsubFarm = convex.onUpdate(
           api.farms.getFarm,
           { farmId: app.farmId as any },
-          (farm: Farm | null) => {
-            farmName = farm?.name ?? null;
-          }
+          (f: Farm | null) => { farm = f; }
         );
       }
     });
@@ -65,8 +74,8 @@
 
     <h1>Application Under Review</h1>
 
-    {#if farmName}
-      <p class="msg">Your application to <strong>{farmName}</strong> is being reviewed by the farm manager.</p>
+    {#if farm?.name}
+      <p class="msg">Your application to <strong>{farm.name}</strong> is being reviewed by the farm manager.</p>
     {:else}
       <p class="msg">Your application is pending review by the farm manager.</p>
     {/if}

@@ -41,14 +41,31 @@
       // Set auth cookie so hooks.server.ts allows access to protected routes
       document.cookie = `agrigate_token=${token}; path=/; max-age=3600; SameSite=Lax`;
 
-      // Check if profile is complete (redirect to complete-profile if not)
-      const profile = await convex.query(api.userProfile.getMyProfile, {});
+      // Check profile state and restore all session cookies
+      const profile = await convex.query(api.userProfile.getMyProfile, {}) as any;
+
       if (!profile || !profile.isProfileComplete) {
         goto("/profile-setup");
+        return;
+      }
+
+      const maxAge = "max-age=31536000; SameSite=Lax";
+      document.cookie = `agrigate_profile_complete=1; path=/; ${maxAge}`;
+
+      if (profile.farmId) {
+        // Returning user — restore farm state cookies so hooks.server.ts
+        // can route them correctly without bouncing back to /marketplace.
+        document.cookie = `agrigate_farm_id=${profile.farmId}; path=/; ${maxAge}`;
+        document.cookie = `agrigate_vetted=${profile.isVetted ? "1" : "0"}; path=/; ${maxAge}`;
+
+        // Fetch farm to get real tier (never hardcode)
+        const farm = await convex.query(api.farms.getFarm, { farmId: profile.farmId }) as any;
+        document.cookie = `agrigate_tier=${farm?.tier ?? "basic"}; path=/; ${maxAge}`;
+
+        goto(profile.isVetted ? "/dashboard" : "/pending-approval");
       } else {
-        // Set profile-complete cookie and go to dashboard
-        document.cookie = "agrigate_profile_complete=1; path=/; max-age=31536000; SameSite=Lax";
-        goto("/dashboard");
+        // New user — no farm yet
+        goto("/marketplace");
       }
     } catch (err: any) {
       status   = "error";
