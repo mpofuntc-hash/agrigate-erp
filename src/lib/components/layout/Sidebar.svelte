@@ -70,8 +70,8 @@
 
 <aside class="sidebar">
   <div class="sidebar-header">
-    <p class="sidebar-sup">ZZ2 Farm Operations</p>
-    <span class="logo">AgriGate ERP</span>
+    <p class="sidebar-sup">Farm Operations Platform</p>
+    <span class="logo">AgriGate</span>
   </div>
 
   <nav>
